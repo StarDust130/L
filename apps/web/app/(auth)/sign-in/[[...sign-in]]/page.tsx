@@ -1,6 +1,13 @@
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { SignIn } from "@clerk/nextjs";
 
-export default function Page() {
+export default async function SignInPage() {
+  const { userId } = await auth();
+
+  if (userId) {
+    redirect("/dashboard");
+  }
   return (
     <main className="grid min-h-screen lg:grid-cols-2">
       <section className="flex flex-col justify-center bg-black p-12 text-white">

@@ -1,6 +1,7 @@
-const Settings = () => {
-  return (
-    <div>Settings</div>
-  )
+import { auth } from "@clerk/nextjs/server";
+
+export default async function SettingsPage() {
+  await auth.protect();
+
+  return <div>Settings</div>;
 }
-export default Settings
