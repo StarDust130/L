@@ -28,9 +28,9 @@ Create a solid development foundation.
 
 ---
 
-<details open>
+<details>
 
-<summary><b>✅ Phase 1 — Application Shell (Current)</b></summary>
+<summary><b>✅ Phase 1 — Application Shell </b></summary>
 
 ### Goal
 
@@ -56,9 +56,9 @@ Build the first working version of the application.
 
 ---
 
-<details>
+<details open>
 
-<summary><b>🚧📄 Phase 2 — Resume Intelligence</b></summary>
+<summary><b>🚧📄 Phase 2 — Resume Intelligence (Current)</b></summary>
 
 ### Goal
 
@@ -73,6 +73,8 @@ Understand the user's resume.
 - ⭕ Extract Resume Text
 - ⭕ AI Candidate Profile
 - ⭕ Edit Candidate Profile
+- ⭕ Save Candidate Profile
+- ⭕ Fill Form Manually
 
 </details>
 
@@ -226,8 +228,8 @@ Persist everything.
 | Phase | Status |
 |--------|--------|
 | ✅ Phase 0 | Complete |
-| 🚧 Phase 1 | In Progress |
-| ⏳ Phase 2 | Planned |
+| ✅ Phase 1 | Complete |
+| 🚧 Phase 2 | In Progress |
 | ⏳ Phase 3 | Planned |
 | ⏳ Phase 4 | Planned |
 | ⏳ Phase 5 | Planned |
