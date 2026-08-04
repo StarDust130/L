@@ -56,9 +56,9 @@ Build the first working version of the application.
 
 ---
 
-<details open>
+<details>
 
-<summary><b>🚧📄 Phase 2 — Resume Intelligence (Current)</b></summary>
+<summary><b> 📄 Phase 2 — Resume Intelligence </b></summary>
 
 ### Goal
 
@@ -66,23 +66,23 @@ Understand the user's resume.
 
 #### Tasks
 
-- ⭕ Upload Resume
-- ⭕ Parse PDF
-- ⭕ Parse DOCX
-- ⭕ Parse TXT
-- ⭕ Extract Resume Text
-- ⭕ AI Candidate Profile
-- ⭕ Edit Candidate Profile
-- ⭕ Save Candidate Profile
-- ⭕ Fill Form Manually
+- ✅ Upload Resume
+- ✅ Parse PDF
+- ✅ Parse DOCX
+- ✅ Parse TXT
+- ✅ Extract Resume Text
+- ✅ AI Candidate Profile
+- ✅ Edit Candidate Profile
+- ✅ Save Candidate Profile
+- ✅ Fill Form Manually
 
 </details>
 
 ---
 
-<details>
+<details open>
 
-<summary><b>🔎 Phase 3 — Job Collection</b></summary>
+<summary><b>🚧🔎 Phase 3 — Job Collection (Current)</b></summary>
 
 ### Goal
 
@@ -229,8 +229,8 @@ Persist everything.
 |--------|--------|
 | ✅ Phase 0 | Complete |
 | ✅ Phase 1 | Complete |
-| 🚧 Phase 2 | In Progress |
-| ⏳ Phase 3 | Planned |
+| ✅ Phase 2 | Complete |
+| 🚧 Phase 3 | In Progress |
 | ⏳ Phase 4 | Planned |
 | ⏳ Phase 5 | Planned |
 | ⏳ Phase 6 | Planned |
