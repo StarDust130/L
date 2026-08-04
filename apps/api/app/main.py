@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import Depends, FastAPI
@@ -5,15 +6,26 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.auth import require_user
 from app.config import get_settings
+from app.db import init_db
+from app.routers.profile import router as profile_router
 from app.routers.resumes import router as resumes_router
 
 # ⚙️ App settings
 settings = get_settings()
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 🏗️ Prepare local database tables
+    await init_db()
+
+    yield
+
+
 # 🚀 FastAPI app
 app = FastAPI(
     title=settings.app_name,
-    version="0.1.0",
+    lifespan=lifespan,
 )
 
 # 🌐 CORS
@@ -37,8 +49,8 @@ def get_current_user(
     return {"user_id": user_id}
 
 
-# 📄 Resume routes
-app.include_router(resumes_router)
+app.include_router(resumes_router)  # 📄 Resume routes
+app.include_router(profile_router)  # 👤 Profile routes
 
 
 # ❤️ Health check
