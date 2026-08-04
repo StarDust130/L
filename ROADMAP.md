@@ -30,7 +30,7 @@ Create a solid development foundation.
 
 <details open>
 
-<summary><b>🚧 Phase 1 — Application Shell (Current)</b></summary>
+<summary><b>✅ Phase 1 — Application Shell (Current)</b></summary>
 
 ### Goal
 
@@ -42,9 +42,9 @@ Build the first working version of the application.
 - ✅ FastAPI health endpoint
 - ✅ Connect frontend with backend
 - ✅ Configuration management
-- ⭕ Clerk Authentication
-- ⭕ Protected dashboard
-- ⭕ User session handling
+- ✅ Clerk Authentication
+- ✅ Protected dashboard
+- ✅ User session handling
 
 ### 🎯 Next Milestone
 
@@ -58,7 +58,7 @@ Build the first working version of the application.
 
 <details>
 
-<summary><b>📄 Phase 2 — Resume Intelligence</b></summary>
+<summary><b>🚧📄 Phase 2 — Resume Intelligence</b></summary>
 
 ### Goal
 
