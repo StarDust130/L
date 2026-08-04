@@ -5,14 +5,18 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.auth import require_user
 from app.config import get_settings
+from app.routers.resumes import router as resumes_router
 
+# ⚙️ App settings
 settings = get_settings()
 
+# 🚀 FastAPI app
 app = FastAPI(
     title=settings.app_name,
     version="0.1.0",
 )
 
+# 🌐 CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -24,9 +28,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Routes
 
-
+# 🛣️ Routes
 @app.get("/me")
 def get_current_user(
     user_id: Annotated[str, Depends(require_user)],
@@ -34,6 +37,11 @@ def get_current_user(
     return {"user_id": user_id}
 
 
+# 📄 Resume routes
+app.include_router(resumes_router)
+
+
+# ❤️ Health check
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
