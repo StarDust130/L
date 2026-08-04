@@ -1,6 +1,8 @@
+import { SignUp } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { SignUp } from "@clerk/nextjs";
+
+import { AuthFrame } from "../../../components/auth-frame";
 
 export default async function SignUpPage() {
   const { userId } = await auth();
@@ -8,29 +10,49 @@ export default async function SignUpPage() {
   if (userId) {
     redirect("/dashboard");
   }
-  
+
   return (
-    <main className="grid min-h-screen lg:grid-cols-2">
-      {/* Left Side */}
-      <section className="hidden lg:flex flex-col justify-center bg-black p-12 text-white">
-        <h1 className="text-5xl font-bold">Join L</h1>
+    <AuthFrame
+      eyebrow="New case"
+      title="Make your career search intentional."
+      description="Give L your profile once. It will become the lens for every opportunity we find together."
+      index="02"
+    >
+      <p className="rule-label text-[#7c6f62]">Create your account</p>
+      <h2 className="mt-3 font-display text-4xl tracking-[-0.055em] text-[#171310]">
+        Start your file.
+      </h2>
+      <p className="mt-3 text-sm leading-6 text-[#655d56]">
+        A few minutes now saves hours of searching later.
+      </p>
 
-        <p className="mt-4 max-w-md text-zinc-400 text-lg">
-          Your AI career agent that helps you discover opportunities, understand
-          your strengths, and land your next role faster.
-        </p>
-
-        <div className="mt-10 space-y-4 text-zinc-300">
-          <p>🤖 AI-powered job discovery</p>
-          <p>🎯 Personalized career recommendations</p>
-          <p>📱 Daily opportunity updates</p>
-        </div>
-      </section>
-
-      {/* Right Side */}
-      <section className="flex items-center justify-center p-6">
-        <SignUp />
-      </section>
-    </main>
+      <div className="mt-8">
+        <SignUp
+          signInUrl="/sign-in"
+          appearance={{
+            variables: {
+              colorPrimary: "#8d2030",
+              colorBackground: "#f7f3eb",
+              colorText: "#171310",
+              borderRadius: "0px",
+              fontFamily: '"Helvetica Neue", Arial, sans-serif',
+            },
+            elements: {
+              card: "w-full border-0 bg-transparent p-0 shadow-none",
+              header: "hidden",
+              footer: "mt-6",
+              formButtonPrimary:
+                "bg-[#8d2030] shadow-none hover:bg-[#651522] focus:bg-[#651522]",
+              formFieldInput:
+                "border-[#171310]/25 bg-transparent shadow-none focus:border-[#8d2030]",
+              socialButtonsBlockButton:
+                "border-[#171310]/20 bg-transparent shadow-none hover:bg-[#ebe4d8]",
+              footerActionLink: "text-[#8d2030] hover:text-[#651522]",
+              identityPreviewEditButton: "text-[#8d2030]",
+            },
+          }}
+        />
+      </div>
+    </AuthFrame>
   );
 }

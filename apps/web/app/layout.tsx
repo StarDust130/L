@@ -1,17 +1,12 @@
 import type { Metadata } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
+
 import "./globals.css";
-import {
-  ClerkProvider,
-  Show,
-  SignInButton,
-  SignUpButton,
-  UserButton,
-} from "@clerk/nextjs";
 
 export const metadata: Metadata = {
-  title: "L: AI Career Agent",
+  title: "L: Career Intelligence",
   description:
-    "L is your personal AI career agent that discovers opportunities, analyzes your profile, and delivers personalized job recommendations to help you land your next role.",
+    "L is a personal AI career agent for focused opportunity discovery.",
 };
 
 export default function RootLayout({
@@ -20,25 +15,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col">
-        {" "}
-        <ClerkProvider>
-          <header className="flex justify-end items-center p-4 gap-4 h-16">
-            <Show when="signed-out">
-              <SignInButton />
-              <SignUpButton>
-                <button className="bg-[#47ddff] text-white rounded-full font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 cursor-pointer">
-                  Sign Up
-                </button>
-              </SignUpButton>
-            </Show>
-            <Show when="signed-in">
-              <UserButton />
-            </Show>
-          </header>
-          {children}
-        </ClerkProvider>
+    <html lang="en" className="min-h-full">
+      <body className="min-h-full">
+        <ClerkProvider>{children}</ClerkProvider>
       </body>
     </html>
   );

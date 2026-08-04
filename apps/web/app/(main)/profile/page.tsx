@@ -1,7 +1,5 @@
-import { auth } from "@clerk/nextjs/server";
+import { ProfileWorkspace } from "./profile-workspace";
 
-export default async function ProfilePage() {
-  await auth.protect();
-
-  return <div>Profile page</div>;
+export default function ProfilePage() {
+  return <ProfileWorkspace />;
 }
