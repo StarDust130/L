@@ -1,6 +1,9 @@
-from fastapi import FastAPI
+from typing import Annotated
+
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.auth import require_user
 from app.config import get_settings
 
 settings = get_settings()
@@ -20,6 +23,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Routes
+
+
+@app.get("/me")
+def get_current_user(
+    user_id: Annotated[str, Depends(require_user)],
+) -> dict[str, str]:
+    return {"user_id": user_id}
 
 
 @app.get("/health")
