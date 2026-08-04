@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "L — AI Career Agent",
+  title: "L: AI Career Agent",
   description:
     "L is your personal AI career agent that discovers opportunities, analyzes your profile, and delivers personalized job recommendations to help you land your next role.",
 };

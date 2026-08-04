@@ -7,8 +7,13 @@ class Settings(BaseSettings):
     app_name: str = "L API" 
     frontend_url: str
 
+    # 🔏 Clerk config
     clerk_secret_key: str
     clerk_authorized_parties: list[str]
+
+    # 🤖 Groq config
+    groq_api_key: str
+    groq_model: str = "openai/gpt-oss-20b"
 
     model_config = SettingsConfigDict(
         env_file=".env",

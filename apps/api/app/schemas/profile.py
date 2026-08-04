@@ -1,21 +1,24 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CandidateProfile(BaseModel):
-    full_name: str | None = None
-    target_roles: list[str] = Field(default_factory=list)
-    skills: list[str] = Field(default_factory=list)
-    experience: list[str] = Field(default_factory=list)
-    education: list[str] = Field(default_factory=list)
-    locations: list[str] = Field(default_factory=list)
-    remote_preference: Literal[
-        "remote",
-        "hybrid",
-        "onsite",
-        "unknown",
-    ] = "unknown"
-    years_of_experience: float | None = None
-    work_authorization: str | None = None
-    links: list[str] = Field(default_factory=list)
+    # 🛡️ Reject unexpected AI fields
+    model_config = ConfigDict(extra="forbid")
+
+    full_name: str | None
+    target_roles: list[str]
+    skills: list[str]
+    experience: list[str]
+    education: list[str]
+    locations: list[str]
+    remote_preference: Literal["remote", "hybrid", "onsite", "flexible", "unknown"]
+    years_of_experience: float | None
+    work_authorization: str | None
+    links: list[str]
+
+
+class ProfileExtractionRequest(BaseModel):
+    # ✂️ Limit text so one huge request cannot create a large bill
+    resume_text: str = Field(min_length=1, max_length=50_000)
