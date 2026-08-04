@@ -4,18 +4,27 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = "L API" 
+    app_name: str = "L API"
     frontend_url: str
 
+    # 🔏 Clerk config
     clerk_secret_key: str
     clerk_authorized_parties: list[str]
+
+    # 🤖 Groq config
+    groq_api_key: str
+    groq_model: str = "openai/gpt-oss-20b"
+
+    # 💾 Local database
+    database_url: str = "sqlite+aiosqlite:///./l.db"
 
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",
     )
 
+
 # Read Setting(.env) once and use it as cache.
 @lru_cache
 def get_settings() -> Settings:
-    return Settings() #type: ignore
+    return Settings()  # type: ignore
