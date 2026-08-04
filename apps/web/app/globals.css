@@ -1,28 +1,103 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --font-app-sans: ui-sans-serif, system-ui, sans-serif;
-  --font-app-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ink: #161310;
+  --ink-soft: #4a443f;
+  --paper: #eee9df;
+  --paper-bright: #f8f5ee;
+  --paper-deep: #ddd5c6;
+  --line: rgba(22, 19, 16, 0.16);
+  --signal: #8d2030;
+  --signal-deep: #651522;
+  --font-display: "Iowan Old Style", "Baskerville", "Times New Roman", serif;
+  --font-app-sans: "Helvetica Neue", "Avenir Next", Arial, sans-serif;
+  --font-app-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--paper);
+  --color-foreground: var(--ink);
   --font-sans: var(--font-app-sans);
   --font-mono: var(--font-app-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  border-color: var(--line);
+}
+
+html {
+  background: var(--paper);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background:
+    radial-gradient(circle at 15% 0%, rgba(141, 32, 48, 0.08), transparent 29rem),
+    var(--paper);
+  color: var(--ink);
   font-family: var(--font-app-sans);
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: var(--signal);
+  color: var(--paper-bright);
+}
+
+:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 3px;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.paper-grain {
+  background-image:
+    radial-gradient(rgba(22, 19, 16, 0.12) 0.55px, transparent 0.7px),
+    radial-gradient(rgba(22, 19, 16, 0.07) 0.45px, transparent 0.65px);
+  background-position: 0 0, 9px 11px;
+  background-size: 13px 13px, 17px 17px;
+}
+
+.rule-label {
+  font-family: var(--font-app-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.case-corners {
+  position: relative;
+}
+
+.case-corners::before,
+.case-corners::after {
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  content: "";
+  pointer-events: none;
+}
+
+.case-corners::before {
+  top: 0.75rem;
+  left: 0.75rem;
+  border-top: 1px solid currentColor;
+  border-left: 1px solid currentColor;
+}
+
+.case-corners::after {
+  right: 0.75rem;
+  bottom: 0.75rem;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
 }
