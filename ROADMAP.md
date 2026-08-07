@@ -58,7 +58,7 @@ Build the first working version of the application.
 
 <details>
 
-<summary><b> 📄 Phase 2 — Resume Intelligence </b></summary>
+<summary><b>✅ 📄 Phase 2 — Resume Intelligence </b></summary>
 
 ### Goal
 
