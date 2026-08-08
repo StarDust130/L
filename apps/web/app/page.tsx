@@ -1,6 +1,7 @@
 // app/sections/Hero.tsx
 "use client";
 
+import Link from "next/link";
 import React from "react";
 
 export default function Hero() {
@@ -19,25 +20,25 @@ export default function Hero() {
         <div className="flex flex-col">
           <div className="flex items-center justify-center">
             <span className="font-serif text-xl text-[#F4EFE6]">L</span>
-            <span className="font-mono text-[9px] tracking-[0.35em] text-[rgba(244,239,230,0.4)] uppercase pl-9">
+            <span className="hidden md:flex font-mono text-[9px] tracking-[0.35em] text-[rgba(244,239,230,0.4)] uppercase pl-9">
               Career Intelligence
             </span>
           </div>
         </div>
         <div className="flex items-center gap-10">
-          <a
-            href="#"
-            className="font-mono text-[11px] tracking-[0.15em] text-[rgba(244,239,230,0.5)] hover:text-[#F4EFE6] transition-colors duration-300"
+          <Link
+            href="/sign-in"
+            className="font-mono hidden md:flex text-[11px] tracking-[0.15em] text-[rgba(244,239,230,0.5)] hover:text-[#F4EFE6] transition-colors duration-300"
           >
             Sign in
-          </a>
-          <a
-            href="#"
+          </Link>
+          <Link
+            href="/dashboard"
             className="font-mono text-[11px] tracking-[0.15em] text-[#F4EFE6] flex items-center gap-2 group"
           >
-            Open case
+            Find jobs
             <ArrowUpRight />
-          </a>
+          </Link>
         </div>
       </nav>
 
@@ -85,7 +86,7 @@ function LeftColumn() {
   return (
     <div className="flex flex-col gap-10 max-w-xl pt-4">
       {/* Badge */}
-      <div className="flex items-center gap-3">
+      <div className="hidden md:flex items-center gap-3">
         <span className="w-1.5 h-1.5 rounded-full bg-[#A52D3F]" />
         <span className="font-mono text-[10px] tracking-[0.3em] text-[#A52D3F] uppercase">
           Your Private Career Intelligence System
@@ -109,19 +110,15 @@ function LeftColumn() {
 
       {/* CTAs */}
       <div className="flex flex-wrap items-center gap-6 pt-2">
-        <button className="group px-8 py-4 bg-[#F4EFE6] text-[#14110f] font-mono text-[11px] tracking-[0.2em] uppercase font-medium hover:bg-[#A52D3F] hover:text-[#F4EFE6] transition-all duration-500">
-          <span className="flex items-center gap-3">
-            Begin your case
-            <ArrowUpRight />
-          </span>
-        </button>
-        <a
-          href="#"
-          className="font-mono text-[11px] tracking-[0.15em] text-[rgba(244,239,230,0.5)] hover:text-[#F4EFE6] transition-colors duration-300 flex items-center gap-2 group"
-        >
-          Return to L
-          <ArrowDownLeft />
-        </a>
+        <Link href="/dashboard">
+          <button className="group px-6 rounded-md py-4 bg-[#F4EFE6] text-[#14110f] font-mono text-[11px] tracking-[0.2em] uppercase font-medium hover:bg-[#A52D3F] hover:text-[#F4EFE6] transition-all duration-500 cursor-pointer">
+            <span className="flex items-center gap-3">
+              Begin your journey
+              <ArrowUpRight />
+            </span>
+          </button>
+        </Link>
+      
       </div>
 
       {/* Trust */}
