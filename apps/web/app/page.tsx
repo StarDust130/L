@@ -1,112 +1,327 @@
-import Link from "next/link";
-import { ArrowDownRight, ArrowUpRight, CircleDot, ShieldCheck } from "lucide-react";
+// app/sections/Hero.tsx
+"use client";
 
-import { BrandMark } from "./components/brand-mark";
+import React from "react";
 
-export default function HomePage() {
+export default function Hero() {
   return (
-    <main className="min-h-screen bg-[#171310] p-3 text-[#f7f2e8] sm:p-5">
-      <section className="paper-grain case-corners relative flex min-h-[calc(100vh-1.5rem)] flex-col overflow-hidden border border-white/20 bg-[#1c1714] sm:min-h-[calc(100vh-2.5rem)]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_81%_20%,rgba(141,32,48,0.47),transparent_22rem),radial-gradient(circle_at_20%_80%,rgba(225,215,193,0.09),transparent_26rem)]" />
+    <section className="relative w-full min-h-screen bg-[#14110f] text-[#F4EFE6] overflow-hidden">
+      {/* Grain */}
+      <div
+        className="absolute inset-0 opacity-[0.025] pointer-events-none"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+        }}
+      />
 
-        <nav className="relative z-10 flex items-center justify-between border-b border-white/15 px-5 py-5 sm:px-8">
-          <BrandMark inverted />
-          <div className="flex items-center gap-3 text-sm">
-            <Link
-              href="/sign-in"
-              className="hidden text-white/70 transition hover:text-white sm:inline"
-            >
-              Sign in
-            </Link>
-            <Link
-              href="/sign-up"
-              className="inline-flex items-center gap-2 border border-white/35 px-4 py-2.5 font-medium transition hover:bg-[#f7f2e8] hover:text-[#171310]"
-            >
-              Open case <ArrowUpRight size={15} />
-            </Link>
+      {/* Nav */}
+      <nav className="relative z-40 w-full px-8 md:px-16 py-8 flex justify-between items-start">
+        <div className="flex flex-col">
+          <div className="flex items-center justify-center">
+            <span className="font-serif text-xl text-[#F4EFE6]">L</span>
+            <span className="font-mono text-[9px] tracking-[0.35em] text-[rgba(244,239,230,0.4)] uppercase pl-9">
+              Career Intelligence
+            </span>
           </div>
-        </nav>
+        </div>
+        <div className="flex items-center gap-10">
+          <a
+            href="#"
+            className="font-mono text-[11px] tracking-[0.15em] text-[rgba(244,239,230,0.5)] hover:text-[#F4EFE6] transition-colors duration-300"
+          >
+            Sign in
+          </a>
+          <a
+            href="#"
+            className="font-mono text-[11px] tracking-[0.15em] text-[#F4EFE6] flex items-center gap-2 group"
+          >
+            Open case
+            <ArrowUpRight />
+          </a>
+        </div>
+      </nav>
 
-        <div className="relative z-10 mx-auto grid w-full max-w-7xl flex-1 items-center gap-12 px-5 py-16 sm:px-8 lg:grid-cols-[1.08fr_0.92fr] lg:py-20">
-          <div>
-            <div className="rule-label flex items-center gap-3 text-[#d9cdb9]">
-              <span className="size-2 rounded-full bg-[#b43647] shadow-[0_0_0_4px_rgba(180,54,71,0.18)]" />
-              Your private career intelligence system
-            </div>
+      {/* Main */}
+      <div className="relative z-30 max-w-[1400px] mx-auto px-8 md:px-16 pt-8 md:pt-16 pb-24">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start">
+          {/* LEFT */}
+          <LeftColumn />
 
-            <h1 className="mt-8 max-w-4xl font-display text-6xl leading-[0.83] tracking-[-0.075em] sm:text-7xl md:text-8xl lg:text-9xl">
-              Find the work
-              <span className="block text-[#b43647]">worth pursuing.</span>
-            </h1>
+          {/* RIGHT: Dossier Stack */}
+          <DossierStack />
+        </div>
+      </div>
 
-            <p className="mt-8 max-w-xl text-base leading-7 text-[#d7cfc2] sm:text-lg">
-              L reads the field, learns your profile, and delivers a focused daily brief of roles that deserve your attention.
-            </p>
+      {/* Bottom */}
+      <div className="absolute bottom-0 left-0 right-0 border-t border-[rgba(244,239,230,0.06)] py-5 px-8 md:px-16 flex justify-between items-center z-40">
+        <span className="font-mono text-[9px] tracking-[0.3em] text-[rgba(244,239,230,0.25)] uppercase">
+          L Intelligence Division
+        </span>
+        <div className="flex items-center gap-2">
+          <div className="w-1 h-1 bg-[#A52D3F] rounded-full animate-pulse" />
+          <span className="font-mono text-[9px] tracking-[0.2em] text-[rgba(244,239,230,0.25)] uppercase">
+            System Online
+          </span>
+        </div>
+      </div>
 
-            <div className="mt-10 flex flex-wrap items-center gap-4">
-              <Link
-                href="/sign-up"
-                className="inline-flex items-center gap-3 bg-[#f7f2e8] px-5 py-3.5 text-sm font-semibold text-[#171310] transition hover:bg-[#d9cdb9]"
-              >
-                Begin your case <ArrowUpRight size={17} />
-              </Link>
-              <Link
-                href="/sign-in"
-                className="inline-flex items-center gap-3 px-2 py-3 text-sm text-white/70 transition hover:text-white"
-              >
-                Return to L <ArrowDownRight size={17} />
-              </Link>
-            </div>
+      {/* Fonts */}
+      <style jsx global>{`
+        @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=JetBrains+Mono:wght@300;400;500;600&display=swap");
+        .font-serif {
+          font-family: "Playfair Display", Georgia, serif;
+        }
+        .font-mono {
+          font-family: "JetBrains Mono", monospace;
+        }
+      `}</style>
+    </section>
+  );
+}
+
+/* ─── Left Column ─── */
+
+function LeftColumn() {
+  return (
+    <div className="flex flex-col gap-10 max-w-xl pt-4">
+      {/* Badge */}
+      <div className="flex items-center gap-3">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#A52D3F]" />
+        <span className="font-mono text-[10px] tracking-[0.3em] text-[#A52D3F] uppercase">
+          Your Private Career Intelligence System
+        </span>
+      </div>
+
+      {/* Headline */}
+      <h1 className="font-serif text-5xl md:text-6xl lg:text-[4.5rem] text-[#F4EFE6] leading-[1.05] tracking-[-0.02em]">
+        Find the work
+        <br />
+        <span className="text-[#A52D3F]">worth</span>
+        <br />
+        <span className="text-[#A52D3F]">pursuing.</span>
+      </h1>
+
+      {/* Body */}
+      <p className="text-[15px] leading-[1.7] text-[rgba(244,239,230,0.55)] max-w-sm">
+        L reads the field, learns your profile, and delivers a focused daily
+        brief of roles that deserve your attention.
+      </p>
+
+      {/* CTAs */}
+      <div className="flex flex-wrap items-center gap-6 pt-2">
+        <button className="group px-8 py-4 bg-[#F4EFE6] text-[#14110f] font-mono text-[11px] tracking-[0.2em] uppercase font-medium hover:bg-[#A52D3F] hover:text-[#F4EFE6] transition-all duration-500">
+          <span className="flex items-center gap-3">
+            Begin your case
+            <ArrowUpRight />
+          </span>
+        </button>
+        <a
+          href="#"
+          className="font-mono text-[11px] tracking-[0.15em] text-[rgba(244,239,230,0.5)] hover:text-[#F4EFE6] transition-colors duration-300 flex items-center gap-2 group"
+        >
+          Return to L
+          <ArrowDownLeft />
+        </a>
+      </div>
+
+      {/* Trust */}
+      <div className="flex items-center gap-4 pt-6 border-t border-[rgba(244,239,230,0.06)]">
+        <ShieldIcon />
+        <span className="font-mono text-[9px] tracking-[0.2em] text-[rgba(244,239,230,0.3)] uppercase">
+          Built for deliberate decisions.
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Dossier Stack ─── */
+
+function DossierStack() {
+  return (
+    <div className="relative h-[520px] md:h-[600px] flex items-center justify-center lg:justify-end">
+      {/* Back card */}
+      <div className="absolute w-[90%] md:w-[420px] h-[420px] md:h-[480px] bg-[#1a1614] border border-[rgba(244,239,230,0.06)] transform rotate-[2deg] translate-x-4 translate-y-4" />
+
+      {/* Middle card */}
+      <div className="absolute w-[90%] md:w-[420px] h-[420px] md:h-[480px] bg-[#EEE7D8] text-[#1a1614] transform rotate-[-1deg] translate-x-2 translate-y-2 shadow-2xl">
+        <div className="p-8 h-full flex flex-col">
+          <div className="flex justify-between items-start mb-8">
+            <span className="font-mono text-[9px] tracking-[0.3em] text-[rgba(26,22,20,0.4)] uppercase">
+              Intel / 002
+            </span>
+            <span className="font-mono text-[8px] tracking-[0.15em] text-[#A52D3F] uppercase border border-[#A52D3F] px-2 py-1">
+              Verified
+            </span>
           </div>
-
-          <div className="mx-auto w-full max-w-md lg:mr-0">
-            <div className="relative border border-white/35 bg-[#e9e2d5] p-3 text-[#171310] shadow-[12px_12px_0_rgba(141,32,48,0.5)] sm:p-5">
-              <div className="case-corners paper-grain min-h-[29rem] border border-[#171310]/50 p-6 sm:min-h-[33rem] sm:p-8">
-                <div className="flex items-start justify-between border-b border-[#171310]/25 pb-5">
-                  <div>
-                    <p className="rule-label text-[#715f53]">Case file / 001</p>
-                    <p className="mt-2 font-display text-3xl tracking-[-0.05em]">Opportunity brief</p>
-                  </div>
-                  <CircleDot size={26} strokeWidth={1.4} />
-                </div>
-
-                <div className="mt-10 flex justify-center">
-                  <div className="grid size-32 place-items-center rounded-full border border-[#171310] p-3 sm:size-40">
-                    <div className="grid size-full place-items-center rounded-full border border-[#171310]">
-                      <span className="font-display text-6xl italic text-[#8d2030] sm:text-7xl">L</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-10 space-y-4 text-sm">
-                  <div className="flex justify-between border-b border-[#171310]/20 pb-3">
-                    <span className="text-[#715f53]">Signal status</span>
-                    <span className="font-mono text-xs font-semibold">STANDBY</span>
-                  </div>
-                  <div className="flex justify-between border-b border-[#171310]/20 pb-3">
-                    <span className="text-[#715f53]">Profile</span>
-                    <span className="font-mono text-xs font-semibold">PRIVATE</span>
-                  </div>
-                  <div className="flex justify-between border-b border-[#171310]/20 pb-3">
-                    <span className="text-[#715f53]">Delivery</span>
-                    <span className="font-mono text-xs font-semibold">DAILY BRIEF</span>
-                  </div>
-                </div>
-
-                <div className="mt-9 flex items-center gap-3 text-xs text-[#715f53]">
-                  <ShieldCheck size={16} />
-                  Built for deliberate decisions.
-                </div>
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-24 h-24 mx-auto border border-[rgba(26,22,20,0.1)] rounded-full flex items-center justify-center mb-4">
+                <span className="font-serif text-5xl text-[#A52D3F]">L</span>
               </div>
+              <p className="font-serif text-lg text-[rgba(26,22,20,0.7)]">
+                Daily Brief Ready
+              </p>
             </div>
           </div>
         </div>
+      </div>
 
-        <footer className="relative z-10 flex flex-col gap-5 border-t border-white/15 px-5 py-5 text-xs text-white/55 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-          <span className="font-mono">L / CAREER INTELLIGENCE / 2026</span>
-          <span>Private by default. Intentional by design.</span>
-        </footer>
-      </section>
-    </main>
+      {/* Front card */}
+
+      <div className="card-front relative w-[90%] md:w-[400px] h-[400px] md:h-[460px] bg-[#F4EFE6] text-[#1a1614] shadow-2xl z-10 transition-all duration-700 hover:-translate-y-2 hover:shadow-[0_20px_60px_rgba(0,0,0,0.4)] cursor-pointer group">
+        <CornerMarks />
+        <div className="p-8 md:p-10 h-full flex flex-col">
+          {/* Header */}
+          <div className="flex justify-between items-start mb-8">
+            <div className="flex flex-col gap-1">
+              <span className="font-mono text-[9px] tracking-[0.3em] text-[rgba(26,22,20,0.35)] uppercase">
+                Case File / 001
+              </span>
+              <span className="font-serif text-xl text-[#1a1614]">
+                Opportunity Brief
+              </span>
+            </div>
+            <div className="w-8 h-8 rounded-full border border-[rgba(26,22,20,0.12)] flex items-center justify-center group-hover:border-[#A52D3F] group-hover:bg-[#A52D3F]/10 transition-all duration-500">
+              <div className="w-2 h-2 rounded-full bg-[#A52D3F] group-hover:scale-125 transition-transform duration-300" />
+            </div>
+          </div>
+
+          {/* Photo */}
+          <div className="flex-1 relative mb-6 overflow-hidden bg-[rgba(26,22,20,0.03)]">
+            <img
+              src="https://i.pinimg.com/736x/6e/83/9e/6e839e2b8e85ca0eb0b977ebe559360a.jpg"
+              alt="Subject"
+              className="w-full h-full object-cover object-top opacity-70 grayscale group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#F4EFE6] via-transparent to-transparent opacity-40" />
+            <div className="absolute bottom-3 left-3 transform translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
+              <span className="font-mono text-[7px] tracking-[0.2em] text-[rgba(26,22,20,0.6)] uppercase bg-[#F4EFE6] px-2 py-1">
+                Subject Photograph
+              </span>
+            </div>
+          </div>
+
+          {/* Data */}
+          <div className="space-y-3">
+            <DataRow label="Signal Status" value="Active" />
+            <DataRow label="Profile" value="Classified" />
+            <DataRow label="Delivery" value="Daily Brief" highlight />
+          </div>
+
+          {/* Footer */}
+          <div className="mt-auto pt-5 flex justify-between items-end">
+            <span className="font-mono text-[8px] tracking-[0.2em] text-[rgba(26,22,20,0.3)] uppercase">
+              Ref: L-2026-001-X
+            </span>
+            <div className="border border-[#A52D3F] px-3 py-1 transform rotate-[-3deg] group-hover:rotate-[-5deg] group-hover:scale-110 transition-all duration-300">
+              <span className="font-mono text-[8px] tracking-[0.15em] text-[#A52D3F] uppercase">
+                Eyes Only
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Floating annotation */}
+      <div className="absolute -right-4 top-1/4 hidden xl:block">
+        <div className="bg-[#14110f] border border-[rgba(165,45,63,0.2)] px-4 py-3 transform rotate-[4deg]">
+          <p className="font-mono text-[20px] text-[#A52D3F] font-bold">96%</p>
+          <p className="font-mono text-[8px] tracking-[0.2em] text-[rgba(244,239,230,0.35)] uppercase mt-1">
+            Match Score
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Sub-Components ─── */
+
+function CornerMarks() {
+  return (
+    <>
+      <div className="absolute top-4 left-4 w-5 h-5 border-t border-l border-[rgba(26,22,20,0.15)]" />
+      <div className="absolute top-4 right-4 w-5 h-5 border-t border-r border-[rgba(26,22,20,0.15)]" />
+      <div className="absolute bottom-4 left-4 w-5 h-5 border-b border-l border-[rgba(26,22,20,0.15)]" />
+      <div className="absolute bottom-4 right-4 w-5 h-5 border-b border-r border-[rgba(26,22,20,0.15)]" />
+    </>
+  );
+}
+
+function DataRow({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div className="flex justify-between items-center pb-3 border-b border-[rgba(26,22,20,0.08)] last:border-0 last:pb-0">
+      <span className="font-mono text-[10px] tracking-[0.15em] text-[rgba(26,22,20,0.4)] uppercase">
+        {label}
+      </span>
+      <span
+        className={`font-mono text-[10px] tracking-[0.15em] uppercase font-medium ${highlight ? "text-[#A52D3F]" : "text-[#1a1614]"}`}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function ArrowUpRight() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+      fill="none"
+      className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
+    >
+      <path
+        d="M1 11L11 1M11 1H3M11 1V9"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+    </svg>
+  );
+}
+
+function ArrowDownLeft() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+      fill="none"
+      className="group-hover:-translate-x-0.5 group-hover:translate-y-0.5 transition-transform"
+    >
+      <path
+        d="M11 1L1 11M1 11H9M1 11V3"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+    </svg>
+  );
+}
+
+function ShieldIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      fill="none"
+      className="text-[rgba(244,239,230,0.3)]"
+    >
+      <path
+        d="M7 1L8.5 5.5H13L9.5 8L10.5 12.5L7 10L3.5 12.5L4.5 8L1 5.5H5.5L7 1Z"
+        stroke="currentColor"
+        strokeWidth="1"
+      />
+    </svg>
   );
 }
