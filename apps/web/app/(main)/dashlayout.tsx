@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import {
   BriefcaseBusiness,
+  ChartArea,
   FileSearch,
   Menu,
   Settings2,
@@ -26,6 +27,12 @@ const navigation = [
     label: "Overview",
     icon: BriefcaseBusiness,
     code: "01",
+  },
+  {
+    href: "/chat",
+    label: "Chat",
+    icon: ChartArea,
+    code: "02",
   },
   {
     href: "/profile",
@@ -98,17 +105,12 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
 
   return (
     <>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center mb-10 justify-between">
         <BrandMark inverted />
         <span className="rule-label text-white/45">v1.0</span>
       </div>
 
-      <div className="mt-12 border-y border-white/15 py-4">
-        <p className="rule-label text-[#d8c9b2]">Current case</p>
-        <p className="mt-2 font-display text-2xl tracking-[-0.05em]">
-          Career search
-        </p>
-      </div>
+
 
       <nav className="mt-6 space-y-1" aria-label="Main navigation">
         {navigation.map((item) => {
