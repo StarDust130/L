@@ -1,10 +1,9 @@
+from app.core.config import get_settings
 from clerk_backend_api import (
     AuthenticateRequestOptions,
     authenticate_request,
 )
 from fastapi import HTTPException, Request
-
-from app.config import get_settings
 
 """
 Read Authorization header

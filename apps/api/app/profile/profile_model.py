@@ -1,9 +1,8 @@
 from datetime import UTC, datetime
 
+from app.db.db import Base
 from sqlalchemy import JSON, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column
-
-from app.db import Base
 
 
 class CandidateProfileRecord(Base):

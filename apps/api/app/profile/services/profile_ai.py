@@ -1,11 +1,10 @@
 import json
 
+from app.core.config import get_settings
+from app.profile.profile_schema import CandidateProfile
 from fastapi import HTTPException
 from groq import Groq
 from pydantic import ValidationError
-
-from app.config import get_settings
-from app.schemas.profile import CandidateProfile
 
 
 def extract_candidate_profile(resume_text: str) -> CandidateProfile:

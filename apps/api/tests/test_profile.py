@@ -1,6 +1,6 @@
-from app.auth import require_user
+from apps.api.app.core.auth import require_user
 from app.main import app
-from app.schemas.profile import CandidateProfile
+from apps.api.app.profile.schemas.profile import CandidateProfile
 from fastapi.testclient import TestClient
 
 

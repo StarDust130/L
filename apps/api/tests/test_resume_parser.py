@@ -1,7 +1,7 @@
 from io import BytesIO
 
 import pytest
-from app.services.resume_parser import extract_resume_text
+from apps.api.app.resume.routers.services.resume_parser import extract_resume_text
 from fastapi import UploadFile
 
 

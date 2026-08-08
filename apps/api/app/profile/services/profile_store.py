@@ -1,10 +1,9 @@
 from datetime import UTC, datetime
 
+from app.profile.profile_model import CandidateProfileRecord
+from app.profile.profile_schema import CandidateProfile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.profile import CandidateProfileRecord
-from app.schemas.profile import CandidateProfile
 
 
 async def get_saved_profile(

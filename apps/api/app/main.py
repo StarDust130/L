@@ -4,11 +4,11 @@ from typing import Annotated
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.auth import require_user
-from app.config import get_settings
-from app.db import init_db
-from app.routers.profile import router as profile_router
-from app.routers.resumes import router as resumes_router
+from app.core.auth import require_user
+from app.core.config import get_settings
+from app.db.db import init_db
+from app.profile.profile_router import router as profile_router
+from app.resume.resume_router import router as resumes_router
 
 # ⚙️ App settings
 settings = get_settings()

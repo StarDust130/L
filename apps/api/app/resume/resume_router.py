@@ -1,10 +1,9 @@
 from typing import Annotated
 
+from app.core.auth import require_user
+from app.resume.resume_schema import ExtractedResume
+from app.resume.services.resume_parser import extract_resume_text
 from fastapi import APIRouter, Depends, File, UploadFile
-
-from app.auth import require_user
-from app.schemas.resume import ExtractedResume
-from app.services.resume_parser import extract_resume_text
 
 router = APIRouter(
     prefix="/api/resumes",

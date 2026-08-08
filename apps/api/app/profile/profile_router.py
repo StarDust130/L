@@ -1,19 +1,18 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.auth import require_user
-from app.db import get_db
-from app.schemas.profile import (
+from app.core.auth import require_user
+from app.db.db import get_db
+from app.profile.profile_schema import (
     CandidateProfile,
     ProfileExtractionRequest,
 )
-from app.services.profile_ai import extract_candidate_profile
-from app.services.profile_store import (
+from app.profile.services.profile_ai import extract_candidate_profile
+from app.profile.services.profile_store import (
     get_saved_profile,
     save_profile,
 )
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(
     prefix="/api/profile",

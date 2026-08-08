@@ -2,11 +2,10 @@ import zipfile
 from io import BytesIO
 from pathlib import Path
 
+from app.resume.resume_schema import ExtractedResume
 from docx import Document
 from fastapi import HTTPException, UploadFile
 from pypdf import PdfReader
-
-from app.schemas.resume import ExtractedResume
 
 MAX_RESUME_SIZE = 5 * 1024 * 1024  # 5 MB
 
