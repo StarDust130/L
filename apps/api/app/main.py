@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.auth import require_user
 from app.core.config import get_settings
+from app.core.logger import setup_logging
 from app.db.db import init_db
 from app.job.job_router import router as job_router
 from app.profile.profile_router import router as profile_router
@@ -59,3 +60,7 @@ app.include_router(job_router)  # 👙 Job routes
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+# Logger 🪵
+setup_logging()
