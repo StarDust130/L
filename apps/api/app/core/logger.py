@@ -1,9 +1,18 @@
 import logging
 
+from rich.logging import RichHandler
+
 
 def setup_logging() -> None:
-    # 📝 Configure application-wide logging.
+    # 🎨 Configure readable terminal logs.
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+        format="%(message)s",
+        datefmt="[%d %b %Y | %I:%M:%S %p]",
+        handlers=[
+            RichHandler(
+                rich_tracebacks=True,
+                show_path=False,
+            )
+        ],
     )
