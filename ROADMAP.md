@@ -90,8 +90,8 @@ Collect jobs automatically.
 
 #### Tasks
 
-- ⭕ Connect First Job Source
-- ⭕ Normalize Job Data
+- ✅ Connect First Job Source
+- ✅ Normalize Job Data
 - ⭕ Handle Errors
 - ⭕ Retry Failed Requests
 
