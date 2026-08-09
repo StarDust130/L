@@ -80,7 +80,7 @@ Understand the user's resume.
 
 ---
 
-<details open>
+<details>
 
 <summary><b>✅🔎 Phase 3 — Job Collection</b></summary>
 
@@ -99,7 +99,7 @@ Collect jobs automatically.
 
 ---
 
-<details>
+<details open>
 
 <summary><b>🚧🗄️ Phase 4 — Database(Current)</b></summary>
 
