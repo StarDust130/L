@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "aiosqlite>=0.22.1",
+    "alembic>=1.19.1",
     "clerk-backend-api>=6.0.1",
     "fastapi[standard]>=0.141.1",
     "groq>=1.6.0",
