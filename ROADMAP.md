@@ -82,7 +82,7 @@ Understand the user's resume.
 
 <details open>
 
-<summary><b>🚧🔎 Phase 3 — Job Collection (Current)</b></summary>
+<summary><b>✅🔎 Phase 3 — Job Collection</b></summary>
 
 ### Goal
 
@@ -92,8 +92,8 @@ Collect jobs automatically.
 
 - ✅ Connect First Job Source
 - ✅ Normalize Job Data
-- ⭕ Handle Errors
-- ⭕ Retry Failed Requests
+- ✅ Handle Errors
+- ✅ Retry Failed Requests
 
 </details>
 
@@ -101,7 +101,7 @@ Collect jobs automatically.
 
 <details>
 
-<summary><b>🗄️ Phase 4 — Database</b></summary>
+<summary><b>🚧🗄️ Phase 4 — Database(Current)</b></summary>
 
 ### Goal
 
@@ -222,7 +222,7 @@ Persist everything.
 ## 📊 Overall Progress
 
 ```text
-██████░░░░░░░░░░░░░░░░░░░░░░ 20%
+███████░░░░░░░░░░░░░░░░░░░░░ 30%
 ```
 
 | Phase | Status |
@@ -230,8 +230,8 @@ Persist everything.
 | ✅ Phase 0 | Complete |
 | ✅ Phase 1 | Complete |
 | ✅ Phase 2 | Complete |
-| 🚧 Phase 3 | In Progress |
-| ⏳ Phase 4 | Planned |
+| ✅ Phase 3 | Complete |
+| 🚧 Phase 4 | In Progress |
 | ⏳ Phase 5 | Planned |
 | ⏳ Phase 6 | Planned |
 | ⏳ Phase 7 | Planned |
