@@ -99,9 +99,9 @@ Collect jobs automatically.
 
 ---
 
-<details open>
+<details>
 
-<summary><b>🚧🗄️ Phase 4 — Database(Current)</b></summary>
+<summary><b>✅🗄️ Phase 4 — Database</b></summary>
 
 ### Goal
 
@@ -109,21 +109,21 @@ Persist everything.
 
 #### Tasks
 
-- ⭕ PostgreSQL
-- ⭕ User Profiles
-- ⭕ Jobs
-- ⭕ Companies
-- ⭕ Search History
-- ⭕ Duplicate Detection
-- ⭕ Seen Jobs
+- ✅ PostgreSQL
+- ✅ User Profiles
+- ✅ Jobs
+- ✅ Companies
+- ✅ Search History
+- ✅ Duplicate Detection
+- ✅ Seen Jobs
 
 </details>
 
 ---
 
-<details>
+<details open>
 
-<summary><b>🎯 Phase 5 — AI Matching</b></summary>
+<summary><b>🚧🎯 Phase 5 — AI Matching (Current)</b></summary>
 
 #### Tasks
 
@@ -222,7 +222,7 @@ Persist everything.
 ## 📊 Overall Progress
 
 ```text
-███████░░░░░░░░░░░░░░░░░░░░░ 30%
+████████░░░░░░░░░░░░░░░░░░░░ 40%
 ```
 
 | Phase | Status |
@@ -231,8 +231,8 @@ Persist everything.
 | ✅ Phase 1 | Complete |
 | ✅ Phase 2 | Complete |
 | ✅ Phase 3 | Complete |
-| 🚧 Phase 4 | In Progress |
-| ⏳ Phase 5 | Planned |
+| ✅ Phase 4 | Complete |
+| 🚧 Phase 5 | In Progress |
 | ⏳ Phase 6 | Planned |
 | ⏳ Phase 7 | Planned |
 | ⏳ Phase 8 | Planned |
