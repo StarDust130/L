@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.auth import require_user
 from app.core.config import get_settings
 from app.db.db import init_db
+from app.job.job_router import router as job_router
 from app.profile.profile_router import router as profile_router
 from app.resume.resume_router import router as resumes_router
 
@@ -51,6 +52,7 @@ def get_current_user(
 
 app.include_router(resumes_router)  # 📄 Resume routes
 app.include_router(profile_router)  # 👤 Profile routes
+app.include_router(job_router)  # 👙 Job routes
 
 
 # ❤️ Health check
