@@ -8,7 +8,7 @@ class RemoteOKError(Exception):
     """Raised when RemoteOK cannot be reached or returns invalid data."""
 
 
-async def collect_jobs() -> list[dict]:
+async def remoteok_job_collector() -> list[dict]:
     """Fetch current jobs from RemoteOK."""
 
     try:
