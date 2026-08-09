@@ -33,7 +33,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with SessionLocal() as session:
         yield session
 
-
+# Look at all my SQLAlchemy models and create their tables if they don't exist.
 async def init_db() -> None:
     # 🏗️ Create tables during local development
 
