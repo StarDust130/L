@@ -1,27 +1,44 @@
 from app.db.db import Base
-from sqlalchemy import String, Text
+from sqlalchemy import String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 
 class Job(Base):
-    __tablename__ = "jobs"
+    """📋 Job listing model - stores job postings from various sources"""
 
-    # 🆔 Our database ID.
+    __tablename__ = "jobs"
+    __table_args__ = (
+        # 🔑 Ensure each source has unique job IDs
+        UniqueConstraint(
+            "source",
+            "external_id",
+            name="uq_job_source_external_id",
+        ),
+    )
+
+    # 🆔 Primary key
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    # 🔑 ID provided by the job source.
+    # 🏷️ Job ID from external source (LinkedIn, Indeed, etc.)
     external_id: Mapped[str] = mapped_column(String(100))
 
+    # 💼 Job title
     title: Mapped[str] = mapped_column(String(255))
-    company: Mapped[str] = mapped_column(String(255))
-    location: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    salary: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    
 
+    # 🏢 Company name
+    company: Mapped[str] = mapped_column(String(255))
+
+    # 📍 Job location (optional)
+    location: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    # 📝 Full job description (optional)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    # 🔗 Where the user actually applies.
+    # 💰 Salary info (optional)
+    salary: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    # 🔗 Application URL
     apply_url: Mapped[str] = mapped_column(String(1000))
 
-    # 🌐 Where we collected the job from.
+    # 📌 Source platform (LinkedIn, Indeed, etc.)
     source: Mapped[str] = mapped_column(String(50))
