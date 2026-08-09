@@ -22,8 +22,14 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 
-# 🧠 Import models so Alembic can detect their tables.
+
+# 🧠 Import all models so Alembic can detect their tables.
+from app.company.company_model import Company  # noqa: F401
+from app.company.target_company_model import TargetCompany  # noqa: F401
 from app.job.job_model import Job  # noqa: F401
+from app.job.recommendation_model import Recommendation  # noqa: F401
+from app.job.seen_job_model import SeenJob  # noqa: F401
+from app.profile.profile_model import CandidateProfileRecord  # noqa: F401
 
 # 📋 Tell Alembic about our SQLAlchemy tables.
 target_metadata = Base.metadata

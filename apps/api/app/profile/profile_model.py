@@ -13,24 +13,27 @@ class CandidateProfileRecord(Base):
         autoincrement=True,
     )
 
-    # 🔐 Connect database data to the Clerk user
+    # 🔐 Connect profile to Clerk user.
     clerk_user_id: Mapped[str] = mapped_column(
         String(255),
         unique=True,
         index=True,
     )
 
-    # 📦 Store the validated profile as JSON
+    # 📦 Store the validated candidate profile.
     profile: Mapped[dict] = mapped_column(JSON)
 
+    # 🕐 Track when the profile was created.
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(UTC),
     )
 
+    # 🔄 Track the latest profile update.
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
     )
 
 

@@ -18,6 +18,7 @@ multiple sources
 """
 # TODO: better deduplication two differnt source can't have same job role from same company with same title and location but different apply_url.
 
+import hashlib
 import logging
 
 from app.job.collectors.remoteok_collector import remoteok_job_collector
@@ -28,21 +29,59 @@ from sqlalchemy.ext.asyncio import AsyncSession
 logger = logging.getLogger(__name__)
 
 
+import logging
+
+from app.company.company_model import Company
+
+logger = logging.getLogger(__name__)
+
+
+def create_job_fingerprint(
+    company: str,
+    title: str,
+    location: str | None,
+) -> str:
+    """Create a stable identity for a job."""
+
+    value = "|".join(
+        [
+            company.strip().lower(),
+            title.strip().lower(),
+            (location or "").strip().lower(),
+        ]
+    )
+
+    return hashlib.sha256(value.encode()).hexdigest()
+
+
 async def collect_and_save_jobs(db: AsyncSession) -> int:
     """Collect jobs from RemoteOK and save new jobs."""
 
-    logger.info(" 🕒 job_collection_started")
+    logger.info("🔎 job_collection_started")
 
-    # 🌐 Get raw jobs from RemoteOK.
     raw_jobs = await remoteok_job_collector()
 
-    logger.info("💁 jobs_fetched count=%s", len(raw_jobs))
+    logger.info("📦 jobs_fetched count=%s", len(raw_jobs))
 
     saved_count = 0
     skipped_count = 0
 
     for raw_job in raw_jobs:
         external_id = str(raw_job["id"])
+        company_name = raw_job["company"]
+
+        # 🧬 Create identity for cross-source duplicate detection.
+        fingerprint = create_job_fingerprint(
+            company_name,
+            raw_job["position"],
+            raw_job.get("location"),
+        )
+        # 🔎 Check if another source already has this job.
+        result = await db.execute(select(Job).where(Job.fingerprint == fingerprint))
+
+        if result.scalar_one_or_none():
+            skipped_count += 1
+            continue
 
         # 🔎 Check if this job already exists.
         result = await db.execute(
@@ -52,18 +91,40 @@ async def collect_and_save_jobs(db: AsyncSession) -> int:
             )
         )
 
-        existing_job = result.scalar_one_or_none()
-
-        # ⏭️ Skip existing jobs.
-        if existing_job:
+        if result.scalar_one_or_none():
             skipped_count += 1
             continue
 
-        # 🧹 Convert source data into our Job model.
+        # 🏢 Find the company.
+        company_result = await db.execute(
+            select(Company).where(
+                Company.name == company_name,
+            )
+        )
+
+        company = company_result.scalar_one_or_none()
+
+        # ➕ Create company if we don't have it.
+        if company is None:
+            company = Company(
+                name=company_name,
+                source="remoteok",
+                external_id=str(raw_job.get("company_id"))
+                if raw_job.get("company_id")
+                else None,
+            )
+
+            db.add(company)
+
+            # 🆔 Get the new company's database ID.
+            await db.flush()
+
+        # 💼 Create our normalized Job.
         job = Job(
             external_id=external_id,
+            fingerprint=fingerprint,
             title=raw_job["position"],
-            company=raw_job["company"],
+            company_id=company.id,
             location=raw_job.get("location"),
             description=raw_job.get("description"),
             salary=raw_job.get("salary"),
@@ -71,12 +132,10 @@ async def collect_and_save_jobs(db: AsyncSession) -> int:
             source="remoteok",
         )
 
-        # 💾 Add the new job to the session.
         db.add(job)
-
         saved_count += 1
 
-    # ✅ Save all new jobs in one transaction.
+    # 💾 Save everything in one transaction.
     await db.commit()
 
     logger.info(

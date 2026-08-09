@@ -1,5 +1,5 @@
 from app.db.db import Base
-from sqlalchemy import String, Text, UniqueConstraint
+from sqlalchemy import ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 
@@ -22,11 +22,21 @@ class Job(Base):
     # 🏷️ Job ID from external source (LinkedIn, Indeed, etc.)
     external_id: Mapped[str] = mapped_column(String(100))
 
+    # 🧬 Used to detect the same job across different sources.
+    fingerprint: Mapped[str] = mapped_column(
+        String(255),
+        unique=True,
+        index=True,
+    )
+
     # 💼 Job title
     title: Mapped[str] = mapped_column(String(255))
 
     # 🏢 Company name
-    company: Mapped[str] = mapped_column(String(255))
+    company_id: Mapped[int] = mapped_column(
+        ForeignKey("companies.id"),
+        index=True,
+    )
 
     # 📍 Job location (optional)
     location: Mapped[str | None] = mapped_column(String(255), nullable=True)
