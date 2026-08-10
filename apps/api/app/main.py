@@ -55,7 +55,7 @@ def get_current_user(
 app.include_router(resumes_router)  # 📄 Resume routes
 app.include_router(profile_router)  # 👤 Profile routes
 app.include_router(job_router)  # 👙 Job routes
-app.include_router(telegram_router)  # 🤖 Telegram routes
+app.include_router(telegram_router)  # 💬 Telegram routes
 
 
 # ❤️ Health check
