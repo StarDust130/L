@@ -15,8 +15,12 @@ class Settings(BaseSettings):
     groq_api_key: str
     groq_model: str = "openai/gpt-oss-20b"
 
-    # 💾 Local database
-    database_url: str = "sqlite+aiosqlite:///./l.db"
+    # 💾 Postgres database
+    database_url: str 
+
+    # 💬 Telegram token
+    telegram_bot_token: str
+    telegram_chat_id: str
 
     model_config = SettingsConfigDict(
         env_file=".env",

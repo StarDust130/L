@@ -11,6 +11,7 @@ from app.db.db import init_db
 from app.job.job_router import router as job_router
 from app.profile.profile_router import router as profile_router
 from app.resume.resume_router import router as resumes_router
+from app.telegram.telegram_router import router as telegram_router
 
 # ⚙️ App settings
 settings = get_settings()
@@ -54,6 +55,7 @@ def get_current_user(
 app.include_router(resumes_router)  # 📄 Resume routes
 app.include_router(profile_router)  # 👤 Profile routes
 app.include_router(job_router)  # 👙 Job routes
+app.include_router(telegram_router)  # 🤖 Telegram routes
 
 
 # ❤️ Health check
