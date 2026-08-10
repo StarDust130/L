@@ -121,25 +121,22 @@ Persist everything.
 
 ---
 
-<details open>
+<details>
 
-<summary><b>🚧🎯 Phase 5 — AI Matching (Current)</b></summary>
+<summary><b>✅🎯 Phase 5 — AI Matching </b></summary>
 
 #### Tasks
 
-- ⭕ Rule-based Filtering
-- ⭕ AI Compatibility Score
-- ⭕ Match Explanation
-- ⭕ Missing Skills
-- ⭕ Risk Detection
+- ✅ Rule-based Filtering
+- ✅ AI Compatibility Score
 
 </details>
 
 ---
 
-<details>
+<details open>
 
-<summary><b>📱 Phase 6 — Telegram Agent</b></summary>
+<summary><b>🚧📱 Phase 6 — Telegram Agent (Current)</b></summary>
 
 #### Tasks
 
@@ -222,7 +219,7 @@ Persist everything.
 ## 📊 Overall Progress
 
 ```text
-████████░░░░░░░░░░░░░░░░░░░░ 40%
+███████████████░░░░░░░░░░░░░ 50%
 ```
 
 | Phase | Status |
@@ -232,8 +229,8 @@ Persist everything.
 | ✅ Phase 2 | Complete |
 | ✅ Phase 3 | Complete |
 | ✅ Phase 4 | Complete |
-| 🚧 Phase 5 | In Progress |
-| ⏳ Phase 6 | Planned |
+| ✅ Phase 5 | Complete |
+| 🚧 Phase 6 | In Progress |
 | ⏳ Phase 7 | Planned |
 | ⏳ Phase 8 | Planned |
 | ⏳ Phase 9 | Planned |
