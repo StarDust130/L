@@ -141,9 +141,9 @@ Persist everything.
 #### Tasks
 
 - ✅ Bot sends messages
-- ⭕ Receive Telegram messages
-- ⭕ Connect Telegram user to L account
-- ⭕ LLM conversation
+- ✅ Receive Telegram messages
+- ✅ Connect Telegram user to L account
+- ✅ LLM conversation
 - ⭕ /jobs → user's recommendations
 - ⭕ Job card → Apply
 - ⭕ Save
