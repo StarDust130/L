@@ -1,25 +1,31 @@
 import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+
 import TelegramPage from "../TelegramPage";
 
-type Props = {
+type TelegramPageProps = {
   searchParams: Promise<{
     token?: string;
   }>;
 };
 
-export default async function Telegram({ searchParams }: Props) {
+export default async function TelegramPageRoute({
+  searchParams,
+}: TelegramPageProps) {
   const { token } = await searchParams;
 
+  // ❌ Telegram link is missing.
   if (!token) {
-    return <div>Invalid Telegram link. 👎</div>;
+    return <div>Invalid Telegram connection link.</div>;
   }
 
-  const { isAuthenticated, redirectToSignIn } = await auth();
+  const { userId } = await auth();
 
-  if (!isAuthenticated) {
-    return redirectToSignIn({
-      returnBackUrl: `/telegram?token=${encodeURIComponent(token)}`,
-    });
+  // 🔐 Not logged in → preserve token through login.
+  if (!userId) {
+    redirect(
+      `/sign-in?redirect_url=${encodeURIComponent(`/telegram/connect?token=${token}`)}`,
+    );
   }
 
   return <TelegramPage token={token} />;

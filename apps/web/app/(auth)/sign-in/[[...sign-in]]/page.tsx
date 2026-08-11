@@ -4,11 +4,19 @@ import { redirect } from "next/navigation";
 
 import { AuthFrame } from "../../../components/auth-frame";
 
-export default async function SignInPage() {
-  const { userId } = await auth();
+type SignInPageProps = {
+  searchParams: Promise<{
+    redirect_url?: string;
+  }>;
+};
 
+export default async function SignInPage({ searchParams }: SignInPageProps) {
+  const { userId } = await auth();
+  const { redirect_url } = await searchParams;
+
+  // 🔐 Already logged in → continue to the requested page.
   if (userId) {
-    redirect("/dashboard");
+    redirect(redirect_url || "/dashboard");
   }
 
   return (
@@ -28,6 +36,7 @@ export default async function SignInPage() {
 
       <div className="mt-8">
         <SignIn
+          forceRedirectUrl={redirect_url || "/dashboard"}
           signUpUrl="/sign-up"
           appearance={{
             variables: {

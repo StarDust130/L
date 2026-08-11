@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 
 type Props = {
@@ -10,23 +10,29 @@ type Props = {
 export default function TelegramPage({ token }: Props) {
   const { getToken } = useAuth();
 
+  const hasConnected = useRef(false);
+
   const [status, setStatus] = useState<"connecting" | "success" | "error">(
     "connecting",
   );
 
   useEffect(() => {
-    async function connect() {
+    if (hasConnected.current) {
+      return;
+    }
+
+    hasConnected.current = true;
+
+    async function connectTelegram() {
       try {
-        // 🔐 Get the authenticated Clerk session token.
         const clerkToken = await getToken();
 
         if (!clerkToken) {
-          throw new Error("Authentication token missing");
+          throw new Error("Clerk token missing");
         }
 
-        // 🔗 Connect Telegram to this authenticated user.
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/telegram/?token=${encodeURIComponent(token)}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/telegram/connect?token=${encodeURIComponent(token)}`,
           {
             method: "POST",
             headers: {
@@ -36,31 +42,30 @@ export default function TelegramPage({ token }: Props) {
         );
 
         if (!response.ok) {
-          throw new Error("Telegram connection failed");
+          const data = await response.json().catch(() => null);
+
+          throw new Error(data?.detail ?? "Telegram connection failed");
         }
 
         setStatus("success");
-      } catch {
+      } catch (error) {
+        console.error("Telegram connection failed:", error);
         setStatus("error");
       }
     }
 
-    connect();
+    connectTelegram();
   }, [getToken, token]);
 
   if (status === "connecting") {
-    return (
-      <main>
-        <p>Connecting L to Telegram...</p>
-      </main>
-    );
+    return <p>Connecting L to Telegram...</p>;
   }
 
   if (status === "error") {
     return (
       <main>
         <h1>Could not connect Telegram</h1>
-        <p>This link may have expired or already been used.</p>
+        <p>We couldn't connect your Telegram account.</p>
       </main>
     );
   }
