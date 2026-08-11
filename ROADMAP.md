@@ -142,10 +142,10 @@ Persist everything.
 
 - ✅ Bot sends messages
 - ✅ Receive Telegram messages
-- ✅ Connect Telegram user to L account
+- 🚧 Telegram ↔ Clerk account linking
 - ✅ LLM conversation
-- ⭕ /jobs → user's recommendations
-- ⭕ Job card → Apply
+- ⭕ /jobs
+- ⭕ Apply
 - ⭕ Save
 - ⭕ Not Interested
 
