@@ -73,3 +73,38 @@
                 Telegram   Quick profile setup
                     ↓        ↓
                     └───→ Telegram    
+----
+
+
+                    ┌──────────────┐
+                    │   Telegram   │
+                    └──────┬───────┘
+                           │
+                         chat_id
+                           ↓
+                  telegram_accounts
+                           │
+                      clerk_user_id
+                           ↓
+            ┌─────────────┐     ┌──────────────┐
+            │  Next.js    │────→│   FastAPI    │
+            │  + Clerk    │     │              │
+            └─────────────┘     └──────┬───────┘
+                                    │
+                                PostgreSQL
+                                    │
+                        ┌──────────────┼──────────────┐
+                        ↓              ↓              ↓
+                Profile       Recommendations    Jobs
+
+---
+            POST /telegram/connect
+
+            1. Clerk user is authenticated ✅
+            2. Token exists ✅
+            3. Token isn't expired ✅
+            4. Token isn't already used ✅
+            5. Telegram isn't connected to another L account ✅
+                ↓
+            6. Create connection ✅
+            7. Mark token used  ✅                
