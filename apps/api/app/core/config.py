@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     app_name: str = "L API"
-    frontend_url: str
+    web_app_url: str
 
     # 🔏 Clerk config
     clerk_secret_key: str
@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     groq_model: str = "openai/gpt-oss-20b"
 
     # 💾 Postgres database
-    database_url: str 
+    database_url: str
 
     # 💬 Telegram token
     telegram_bot_token: str
