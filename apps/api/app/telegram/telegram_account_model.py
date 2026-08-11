@@ -1,44 +1,55 @@
 from datetime import UTC, datetime
 
 from app.db.db import Base
-from sqlalchemy import DateTime, String, UniqueConstraint
+from sqlalchemy import DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 
 class TelegramAccount(Base):
     __tablename__ = "telegram_accounts"
 
-    __table_args__ = (
-        UniqueConstraint( 
-            "clerk_user_id",
-            name="uq_telegram_account_clerk_user",
-        ),
-        UniqueConstraint(
-            "telegram_chat_id",
-            name="uq_telegram_account_chat",
-        ),
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        autoincrement=True,
     )
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-
-    # 🔐 L user identity.
+    # 🔐 L user
     clerk_user_id: Mapped[str] = mapped_column(
         String(255),
+        unique=True,
         index=True,
     )
 
-    # 📱 Telegram identity.
-    telegram_chat_id: Mapped[str] = mapped_column(
-        String(255),
+    # 📱 Telegram chat
+    # NULL until the user connects Telegram.
+    telegram_chat_id: Mapped[str | None] = mapped_column(
+        String(100),
+        unique=True,
+        nullable=True,
         index=True,
     )
 
-    telegram_username: Mapped[str | None] = mapped_column(
-        String(255),
+    # 🔑 Temporary connection code
+    link_code: Mapped[str | None] = mapped_column(
+        String(20),
+        unique=True,
+        nullable=True,
+        index=True,
+    )
+
+    # ⏳ Code expires after 10 minutes
+    link_code_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
         nullable=True,
     )
 
-    linked_at: Mapped[datetime] = mapped_column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(UTC),
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
     )
