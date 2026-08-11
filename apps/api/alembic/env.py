@@ -30,7 +30,6 @@ from app.job.recommendation_model import Recommendation  # noqa: F401
 from app.job.seen_job_model import SeenJob  # noqa: F401
 from app.profile.profile_model import CandidateProfileRecord  # noqa: F401
 from app.telegram.telegram_account_model import TelegramAccount  # noqa: F401
-from app.telegram.telegram_link_model import TelegramLinkToken  # noqa: F401
 
 # 📋 Tell Alembic about our SQLAlchemy tables.
 target_metadata = Base.metadata
