@@ -276,6 +276,7 @@ async def handle_telegram_message(
     response = await run_agent(
         message=message,
         user_id=account.clerk_user_id,
+        db=db,
     )
 
     # 📤 Send the AI response back to Telegram.
@@ -283,3 +284,50 @@ async def handle_telegram_message(
         chat_id=chat_id,
         text=response,
     )
+
+
+async def send_job_cards(
+    chat_id: str,
+    jobs: list[dict[str, object]],
+) -> None:
+    """💼 Send recommended jobs as Telegram cards."""
+
+    for job in jobs:
+        match_score = float(job["match_score"])
+
+        keyboard = {
+            "inline_keyboard": [
+                [
+                    {
+                        "text": "🚀 Apply",
+                        "url": str(job["apply_url"]),
+                    },
+                ],
+                [
+                    {
+                        "text": "💾 Save",
+                        "callback_data": f"save:{job['job_id']}",
+                    },
+                    {
+                        "text": "❌ Not Interested",
+                        "callback_data": (f"not_interested:{job['job_id']}"),
+                    },
+                ],
+            ]
+        }
+
+        location = job["location"] or "Remote / Not specified"
+
+        text = (
+            f"💼 <b>{job['title']}</b>\n\n"
+            f"🏢 {job['company']}\n"
+            f"📍 {location}\n"
+            f"🎯 <b>{match_score:.0f}% match</b>"
+        )
+
+        await send_message(
+            chat_id=chat_id,
+            text=text,
+            reply_markup=keyboard,
+            parse_mode="HTML",
+        )
