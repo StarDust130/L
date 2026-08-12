@@ -134,28 +134,27 @@ Persist everything.
 
 ---
 
-<details open>
+<details>
 
-<summary><b>🚧📱 Phase 6 — Telegram Agent (Current)</b></summary>
+<summary><b>✅📱 Phase 6 — Telegram Agent</b></summary>
 
 #### Tasks
 
 - ✅ Bot sends messages
 - ✅ Receive Telegram messages
-- 🚧 Telegram ↔ Clerk account linking
+- ✅ Telegram ↔ Clerk account linking
 - ✅ LLM conversation
-- ⭕ /jobs
-- ⭕ Apply
-- ⭕ Save
-- ⭕ Not Interested
+- ✅ /jobs
+- ✅ Apply
+
 
 </details>
 
 ---
 
-<details>
+<details open>
 
-<summary><b>⏰ Phase 7 — Automation</b></summary>
+<summary><b>🚧⏰ Phase 7 — Automation (Current)</b></summary>
 
 #### Tasks
 
@@ -222,7 +221,7 @@ Persist everything.
 ## 📊 Overall Progress
 
 ```text
-███████████████░░░░░░░░░░░░░ 50%
+████████████████░░░░░░░░░░░ 60%
 ```
 
 | Phase | Status |
@@ -233,8 +232,8 @@ Persist everything.
 | ✅ Phase 3 | Complete |
 | ✅ Phase 4 | Complete |
 | ✅ Phase 5 | Complete |
-| 🚧 Phase 6 | In Progress |
-| ⏳ Phase 7 | Planned |
+| ✅ Phase 6 | Complete |
+| 🚧 Phase 7 | In Progress |
 | ⏳ Phase 8 | Planned |
 | ⏳ Phase 9 | Planned |
 | ⏳ Phase 10 | Planned |
