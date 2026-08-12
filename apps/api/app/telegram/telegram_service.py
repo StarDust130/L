@@ -1,15 +1,18 @@
 import secrets
 from datetime import UTC, datetime, timedelta
+from html import escape
 
-from app.agent.agent_service import run_agent
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.agent.agent import run_agent
+from app.agent.tools.jobs import JobRecommendation
 from app.core.config import get_settings
 from app.telegram.telegram_account_model import TelegramAccount
 from app.telegram.telegram_client import (
     send_message,
     send_typing,
 )
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 settings = get_settings()
 
@@ -280,49 +283,46 @@ async def handle_telegram_message(
     )
 
     # 📤 Send the AI response back to Telegram.
+    if response.type == "jobs" and response.jobs:
+        await send_job_cards(
+            chat_id=chat_id,
+            jobs=response.jobs,
+        )
+        return
+
     await send_message(
         chat_id=chat_id,
-        text=response,
+        text=response.content,
     )
 
 
 async def send_job_cards(
     chat_id: str,
-    jobs: list[dict[str, object]],
+    jobs: list[JobRecommendation],
 ) -> None:
-    """💼 Send recommended jobs as Telegram cards."""
+    """Send recommendation cards with the real application URLs."""
 
     for job in jobs:
-        match_score = float(job["match_score"])
+        location = escape(job["location"] or "Remote / Not specified")
+        salary = escape(job["salary"] or "Not specified")
 
         keyboard = {
             "inline_keyboard": [
                 [
                     {
                         "text": "🚀 Apply",
-                        "url": str(job["apply_url"]),
-                    },
-                ],
-                [
-                    {
-                        "text": "💾 Save",
-                        "callback_data": f"save:{job['job_id']}",
-                    },
-                    {
-                        "text": "❌ Not Interested",
-                        "callback_data": (f"not_interested:{job['job_id']}"),
+                        "url": job["apply_url"],
                     },
                 ],
             ]
         }
 
-        location = job["location"] or "Remote / Not specified"
-
         text = (
-            f"💼 <b>{job['title']}</b>\n\n"
-            f"🏢 {job['company']}\n"
+            f"💼 <b>{escape(job['title'])}</b>\n\n"
+            f"🏢 {escape(job['company'])}\n"
             f"📍 {location}\n"
-            f"🎯 <b>{match_score:.0f}% match</b>"
+            f"💰 {salary}\n"
+            f"🎯 <b>{job['match_score']:.0f}% match</b>"
         )
 
         await send_message(
