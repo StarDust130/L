@@ -80,9 +80,9 @@ Understand the user's resume.
 
 ---
 
-<details>
+<details open>
 
-<summary><b>✅🔎 Phase 3 — Job Collection</b></summary>
+<summary><b>🚧🔎 Phase 3 — Job Collection</b></summary>
 
 ### Goal
 
@@ -90,10 +90,12 @@ Collect jobs automatically.
 
 #### Tasks
 
-- ✅ Connect First Job Source
-- ✅ Normalize Job Data
-- ✅ Handle Errors
-- ✅ Retry Failed Requests
+- 🚧 High-quality job sources
+- 🚧 Job normalization
+- 🚧 Source validation
+- 🚧 Cross-source duplicate detection
+- 🚧 Stale job detection
+- 🚧 Failed-source retry
 
 </details>
 
