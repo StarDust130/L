@@ -1,10 +1,10 @@
 from typing import Any
 
 import httpx
+
 from app.core.config import get_settings
 
 settings = get_settings()
-
 
 async def send_typing(chat_id: str) -> None:
     """⌨️ Show typing indicator in Telegram."""
@@ -19,7 +19,7 @@ async def send_typing(chat_id: str) -> None:
     async with httpx.AsyncClient() as client:
         response = await client.post(
             url,
-            json=payload,
+            json=payload,   
         )
 
         response.raise_for_status()
