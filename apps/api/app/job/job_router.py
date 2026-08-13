@@ -1,100 +1,52 @@
-from app.db.db import get_db
-from app.job.job_model import Job
-from app.job.job_service import collect_and_save_jobs
-from app.job.matching.ai_matching_service import calculate_compatibility_score
-from app.job.matching.matching_service import match_jobs_for_user
-from app.profile.profile_model import CandidateProfileRecord
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from app.db.db import get_db  # 🗄️ Database dependency
+from app.job.job_service import collect_and_save_jobs  # 📥 Collect jobs
+from app.job.matching.matching_service import match_jobs_for_user  # 🧠 Match jobs
+from app.profile.profile_model import CandidateProfileRecord  # 👤 Profile model
+from fastapi import APIRouter, Depends, HTTPException  # 🚀 FastAPI tools
+from sqlalchemy import select  # 🔍 Build database queries
+from sqlalchemy.ext.asyncio import AsyncSession  # 🔄 Async DB session
 
 # 💼 Job API routes
 router = APIRouter(prefix="/jobs", tags=["Jobs"])
 
 
-# 🔎 Collect new jobs
+# 📥 Collect new jobs and save them to the database
 @router.post("/collect")
 async def collect_jobs(db: AsyncSession = Depends(get_db)):
     # 🔎 Collect and save jobs
     saved_count = await collect_and_save_jobs(db)
 
+    # 📤 Return number of saved jobs
     return {
         "saved": saved_count,
     }
 
 
-# 🤖 Test AI on one job #TODO: REMOVE IT LATER
-@router.post("/test-ai/{job_id}")
-async def test_ai_matching(
-    job_id: int,
-    db: AsyncSession = Depends(get_db),
-):
-    """Test AI matching against one real job."""
-
-    # 👤 Get candidate
-    profile_result = await db.execute(select(CandidateProfileRecord).limit(1))
-
-    profile = profile_result.scalar_one_or_none()
-
-    # ❌ No candidate
-    if profile is None:
-        raise HTTPException(
-            status_code=404,
-            detail="No candidate profile found",
-        )
-
-    # 💼 Get job
-    job_result = await db.execute(select(Job).where(Job.id == job_id))
-
-    job = job_result.scalar_one_or_none()
-
-    # ❌ No job
-    if job is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Job not found",
-        )
-
-    # 🤖 Ask AI for score
-    result = await calculate_compatibility_score(
-        profile.profile,
-        job,
-    )
-
-    # 📊 Return score
-    return {
-        "job_id": job.id,
-        "title": job.title,
-        "score": result.score,
-    }
-
-
-# 🧠 Match jobs for candidate
+# 🧠 Match available jobs with the candidate profile
 @router.post("/match")
 async def match_jobs(
     db: AsyncSession = Depends(get_db),
 ):
-    """Test the full job matching pipeline."""
-
-    # 👤 Get candidate
+    # 👤 Find a candidate profile
     result = await db.execute(select(CandidateProfileRecord).limit(1))
 
+    # 📦 Get the profile
     profile = result.scalar_one_or_none()
 
-    # ❌ No candidate
+    # ❌ Stop if no profile exists
     if profile is None:
         raise HTTPException(
             status_code=404,
             detail="No candidate profile found",
         )
 
-    # 🧠 Run job matching
+    # 🧠 Run the job matching process
     saved_count = await match_jobs_for_user(
         db=db,
         profile=profile,
     )
 
-    # 📦 Return count
+    # 📤 Return number of recommendations
     return {
         "recommendations_created": saved_count,
     }
