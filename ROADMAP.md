@@ -187,8 +187,9 @@ Persist everything.
 ---
 
 <details>
+---
 
-<summary><b>📒 Phase 9 — Notion Integration</b></summary>
+<summary><b>📒 Extra 1 — Notion Integration</b></summary>
 
 #### Tasks
 
@@ -203,7 +204,7 @@ Persist everything.
 
 <details>
 
-<summary><b>⚡ Phase 10 — AI Intelligence</b></summary>
+<summary><b>⚡ Extra 2 — AI Intelligence</b></summary>
 
 #### Tasks
 
@@ -218,27 +219,6 @@ Persist everything.
 
 ---
 
-## 📊 Overall Progress
-
-```text
-████████████████░░░░░░░░░░░ 60%
-```
-
-| Phase | Status |
-|--------|--------|
-| ✅ Phase 0 | Complete |
-| ✅ Phase 1 | Complete |
-| ✅ Phase 2 | Complete |
-| ✅ Phase 3 | Complete |
-| ✅ Phase 4 | Complete |
-| ✅ Phase 5 | Complete |
-| ✅ Phase 6 | Complete |
-| 🚧 Phase 7 | In Progress |
-| ⏳ Phase 8 | Planned |
-| ⏳ Phase 9 | Planned |
-| ⏳ Phase 10 | Planned |
-
----
 
 ## 🧠 Engineering Principles
 
