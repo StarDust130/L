@@ -90,12 +90,15 @@ Collect jobs automatically.
 
 #### Tasks
 
-- 🚧 High-quality job sources
-- 🚧 Job normalization
-- 🚧 Source validation
-- 🚧 Cross-source duplicate detection
-- 🚧 Stale job detection
-- 🚧 Failed-source retry
+⭕ Discover target companies
+⭕ Collect company metadata
+⭕ Discover career pages
+⭕ Collect jobs
+⭕ Normalize jobs
+⭕ Detect job updates
+⭕ Cross-source duplicate detection
+⭕ Store source listings
+⭕ Remove/expire stale jobs
 
 </details>
 

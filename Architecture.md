@@ -48,3 +48,39 @@
                     ✅ Connected
                     ↓
                     Normal Telegram chat → LLM
+
+
+                                   🏢 Companies
+                                          ↑
+                            discovery sources
+                                          ↑
+                            ┌────────────┼────────────┐
+                            │            │            │
+                            YC        founder data    manual
+                            │
+                            ↓
+                     Career URL discovery
+                            ↓
+                     ┌──────┼────────┐
+                     ↓      ↓        ↓
+                     YC    Greenhouse Lever
+                     ↓      ↓        ↓
+                     └──────┼────────┘
+                            ↓
+                     Raw job listing
+                            ↓
+                     Normalize
+                            ↓
+                     Canonical Job
+                            ↓
+                     Job Listings
+                            ↓
+                     PostgreSQL
+                            ↓
+                     Rule Filter
+                            ↓
+                     AI Match
+                            ↓
+                     Recommendations
+                            ↓
+                     Telegram
