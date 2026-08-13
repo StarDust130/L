@@ -2,10 +2,10 @@ import secrets  # 🔐 Generate secure random codes
 from datetime import UTC, datetime, timedelta  # 🕐 Work with time
 from html import escape  # 🛡️ Safely display HTML text
 
-from apps.api.app.agent.agent import run_agent
 from sqlalchemy import select  # 🔎 Build database queries
 from sqlalchemy.ext.asyncio import AsyncSession  # 🔄 Async database session
 
+from app.agent.agent import run_agent
 from app.agent.tools.jobs import JobRecommendation  # 💼 Job recommendation type
 from app.core.config import get_settings  # ⚙️ Load app settings
 from app.telegram.telegram_account_model import (
