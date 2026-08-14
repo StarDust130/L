@@ -70,3 +70,32 @@
                     Recommendations
                           ↓
                        Telegram
+
+---
+
+               (L Bhiaya Agent Loop 🕺)
+
+                     🎯 USER GOAL
+                         ↓
+                    🧠 L AGENT
+                         ↓
+                "What should I do?"
+                         ↓
+              ┌──────────┴──────────┐
+              ↓                     ↓
+          🔎 Research             💾 Data
+             Tools                 Tools
+              ↓                     ↓
+       search / fetch /       save / update /
+       extract / discover     dedupe / query
+              └──────────┬──────────┘
+                         ↓
+                     🔍 OBSERVE
+                         ↓
+              "Do I have enough?"
+                 ↙             ↘
+               NO               YES
+                ↓                 ↓
+           use another tool    finish
+                ↓                 ↓
+                └────── loop ─────┘
