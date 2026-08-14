@@ -4,6 +4,7 @@ from typing import Any
 from groq.types.chat import ChatCompletionToolParam
 
 from app.agent.tools.jobs import get_my_recommendations
+from app.agent.tools.web import search_web
 
 # 🤖 Tools exposed to the LLM.
 TOOL_SCHEMAS: list[ChatCompletionToolParam] = [
@@ -23,6 +24,28 @@ TOOL_SCHEMAS: list[ChatCompletionToolParam] = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "search_web",
+            "description": (
+                "Search the internet for real, current information. "
+                "Use this when the user asks to find new jobs, "
+                "companies, career opportunities, or other information "
+                "that may not exist in the database."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": ("A precise web search query."),
+                    },
+                },
+                "required": ["query"],
+            },
+        },
+    },
 ]
 
 
@@ -32,4 +55,5 @@ TOOL_FUNCTIONS: dict[
     Callable[..., Awaitable[Any]],
 ] = {
     "get_my_recommendations": get_my_recommendations,
+    "search_web": search_web,
 }
