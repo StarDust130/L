@@ -20,6 +20,7 @@ dependencies = [
     "python-multipart>=0.0.32",
     "rich>=15.0.0",
     "sqlalchemy>=2.0.51",
+    "tavily-python>=0.7.27",
     "uvicorn[standard]>=0.52.1",
 ]
 
