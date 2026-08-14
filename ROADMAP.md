@@ -90,15 +90,16 @@ Collect jobs automatically.
 
 #### Tasks
 
-⭕ Discover target companies
-⭕ Collect company metadata
-⭕ Discover career pages
-⭕ Collect jobs
-⭕ Normalize jobs
-⭕ Detect job updates
-⭕ Cross-source duplicate detection
-⭕ Store source listings
-⭕ Remove/expire stale jobs
+Phase 3 — Intelligence Engine
+
+✅ Job storage
+✅ Company storage
+🚧 Web research tools
+🚧 Company discovery
+🚧 Job discovery
+🚧 Normalization
+🚧 Deduplication
+🚧 Change detection
 
 </details>
 
