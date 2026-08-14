@@ -1,30 +1,4 @@
-                         L
-                         │
-             ┌───────────┴───────────┐
-             │                       │
-          🌐 Web                  📱 Telegram
-             │                       │
-        Clerk Auth                Telegram
-             │                       │
-        Resume/Profile               │
-             │                       │
-             └───────────┬───────────┘
-                         │
-                  👤 Identity
-                         │
-                  clerk_user_id
-                         │
-                  🧠 Agent Core
-                         │
-              ┌──────────┼──────────┐
-              │          │          │
-             Jobs      Profile    Tools
-              │          │          │
-              └──────────┼──────────┘
-                         │
-                    PostgreSQL
 
----
 
                     Website
                     ↓
@@ -99,3 +73,33 @@
            use another tool    finish
                 ↓                 ↓
                 └────── loop ─────┘
+
+---
+               1. Need candidate profile
+               → get_my_profile()
+
+               2. Need companies/jobs
+               → search_web()
+
+               3. Found a company
+               → inspect_company()
+
+               4. Need career page
+               → find_career_page()
+
+               5. Found jobs
+               → extract_jobs()
+
+               6. Need more candidates?
+               → search again
+
+               7. Have enough good jobs?
+               → deduplicate()
+
+               8. Save useful results
+               → save_job()
+
+               9. Rank for user
+               → match_jobs()
+
+               10. Return best 5–10                
