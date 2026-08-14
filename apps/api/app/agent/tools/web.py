@@ -1,21 +1,56 @@
-import httpx
+from typing import TypedDict
+
+from tavily import TavilyClient
+
+from app.core.config import get_settings
+
+settings = get_settings()
 
 
-async def fetch_page(url: str) -> str:
-    """🌐 Fetch readable text from a webpage."""
+class WebSearchResult(TypedDict):
+    """🌐 Small, clean result returned to the agent."""
 
-    try:
-        async with httpx.AsyncClient(
-            timeout=20,
-            follow_redirects=True,
-            headers={
-                "User-Agent": "L-Agent/1.0",
-            },
-        ) as client:
-            response = await client.get(url)
-            response.raise_for_status()
+    title: str
+    url: str
+    content: str
+    score: float
 
-        return response.text[:20_000]
 
-    except httpx.HTTPError as exc:
-        return f"Failed to fetch page: {exc}"
+async def search_web(
+    query: str,
+) -> list[WebSearchResult]:
+    """
+    🔎 Search the web for information relevant to the user's request.
+
+    The search provider does the web search.
+    This function only normalizes the results into the small
+    structure our agent needs.
+    """
+
+    # 🔐 API key stays on the backend.
+    client = TavilyClient(
+        api_key=settings.tavily_api_key,
+    )
+
+    # 💰 Basic search keeps the first version cheap.
+    response = client.search(
+        query=query,
+        search_depth="basic",
+        max_results=5,
+        include_answer=False,
+        include_raw_content=False,
+    )
+
+    results: list[WebSearchResult] = []
+
+    for item in response.get("results", []):
+        results.append(
+            {
+                "title": str(item.get("title", "")),
+                "url": str(item.get("url", "")),
+                "content": str(item.get("content", "")),
+                "score": float(item.get("score", 0)),
+            }
+        )
+
+    return results
