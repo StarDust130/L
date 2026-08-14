@@ -2,9 +2,9 @@ from pydantic import BaseModel, Field
 
 
 class AICompatibilityResult(BaseModel):
-    """Validated result returned by the AI job matcher."""
+    """🤖 Validated AI compatibility result."""
 
-    score: int = Field(
+    score: float = Field(
         ge=0,
         le=100,
     )
