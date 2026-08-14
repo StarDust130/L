@@ -1,16 +1,17 @@
 from dataclasses import dataclass
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.job.job_model import Job
 from app.job.matching.ai_matching_service import calculate_compatibility_score
 from app.job.recommendation_model import Recommendation
 from app.profile.profile_model import CandidateProfileRecord
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @dataclass
 class RuleFilterResult:
-    """Result of the cheap rule-based job filter."""
+    """🧹 Cheap pre-filter result."""
 
     passed: bool
     reasons: list[str]
@@ -21,22 +22,32 @@ def rule_based_filter(
     profile: CandidateProfileRecord,
     job: Job,
 ) -> RuleFilterResult:
-    """Apply cheap rules before sending a job to the AI."""
+    """🧹 Remove only obviously unusable jobs before AI scoring."""
 
-    # 👤 Get candidate preferences
     candidate = profile.profile
 
-    preferred_locations = candidate.get("preferred_locations", [])
-    preferred_roles = candidate.get("preferred_roles", [])
     skills = candidate.get("skills", [])
 
     reasons: list[str] = []
     matched_skills: list[str] = []
 
-    # 🔎 Prepare job text for searching
-    job_title = job.title.lower()
-    job_location = (job.location or "").lower()
+    # ❌ No title = unusable job.
+    if not job.title:
+        return RuleFilterResult(
+            passed=False,
+            reasons=["missing_title"],
+            matched_skills=[],
+        )
 
+    # ❌ No way to apply = unusable job.
+    if not job.apply_url:
+        return RuleFilterResult(
+            passed=False,
+            reasons=["missing_apply_url"],
+            matched_skills=[],
+        )
+
+    # 🧠 Search title + description for candidate skills.
     job_text = " ".join(
         [
             job.title,
@@ -44,62 +55,17 @@ def rule_based_filter(
         ]
     ).lower()
 
-    # 📍 Check location preference
-    if preferred_locations:
-        location_match = any(
-            location.lower() in job_location for location in preferred_locations
-        )
-
-        # 🏠 Remote jobs are also allowed
-        remote_match = "remote" in job_location
-
-        # ❌ Reject if location does not match
-        if not location_match and not remote_match:
-            return RuleFilterResult(
-                passed=False,
-                reasons=["location_mismatch"],
-                matched_skills=[],
-            )
-
-        # ✅ Location is okay
-        reasons.append("location_match")
-
-    # 💼 Check role preference
-    if preferred_roles:
-        role_match = any(role.lower() in job_title for role in preferred_roles)
-
-        # ❌ Reject if role does not match
-        if not role_match:
-            return RuleFilterResult(
-                passed=False,
-                reasons=["role_mismatch"],
-                matched_skills=[],
-            )
-
-        # ✅ Role is okay
-        reasons.append("role_match")
-
-    # 🧠 Find skills mentioned in the job
     for skill in skills:
         if skill.lower() in job_text:
             matched_skills.append(skill)
 
-    # ✅ Skills are a positive signal, not a rejection rule
     if matched_skills:
         reasons.append("skill_match")
 
-    # 📦 Make sure the job has enough data
-    if job.title and (job.description or job.apply_url):
-        reasons.append("usable_job_data")
-    else:
-        # ❌ Not enough information to send to AI
-        return RuleFilterResult(
-            passed=False,
-            reasons=["insufficient_job_data"],
-            matched_skills=matched_skills,
-        )
+    reasons.append("usable_job_data")
 
-    # 🚀 Job passed the basic filters
+    # ✅ Don't reject because of role/location.
+    # AI will decide whether the job is actually a good match.
     return RuleFilterResult(
         passed=True,
         reasons=reasons,
@@ -132,9 +98,10 @@ async def match_jobs_for_user(
     db: AsyncSession,
     profile: CandidateProfileRecord,
 ) -> int:
-    """Filter jobs, score them with AI, and save recommendations."""
+    """🎯 Find and save strong job matches for one user."""
 
-    # 💼 Get jobs from PostgreSQL.
+    # 💼 Get all discovered jobs.
+    # These are the global job pool, NOT recommendations.
     result = await db.execute(select(Job))
 
     jobs = result.scalars().all()
@@ -142,30 +109,39 @@ async def match_jobs_for_user(
     saved_count = 0
 
     for job in jobs:
-        # 🧹 Cheap filter first.
-        filter_result = rule_based_filter(profile, job)
+        # 🧹 Cheap deterministic filter.
+        # Only removes obviously unusable jobs.
+        filter_result = rule_based_filter(
+            profile,
+            job,
+        )
 
         if not filter_result.passed:
             continue
 
-        # 🚫 Don't score an already processed job.
-        existing = await db.execute(
+        # 🚫 Don't score the same user/job pair twice.
+        result = await db.execute(
             select(Recommendation).where(
                 Recommendation.clerk_user_id == profile.clerk_user_id,
                 Recommendation.job_id == job.id,
             )
         )
 
-        if existing.scalar_one_or_none():
+        if result.scalar_one_or_none():
             continue
 
-        # 🤖 Ask AI for compatibility score.
+        # 🤖 AI decides whether this job is actually relevant.
         ai_result = await calculate_compatibility_score(
             profile.profile,
             job,
         )
 
-        # 💾 Save the recommendation.
+        # ❌ Weak match → keep the job in `jobs`,
+        # but don't create a recommendation.
+        if ai_result.score < 10: # TODO: -> MAKE IT 60% in production
+            continue
+
+        # 💾 Strong match → create user-specific recommendation.
         recommendation = Recommendation(
             clerk_user_id=profile.clerk_user_id,
             job_id=job.id,
@@ -173,9 +149,10 @@ async def match_jobs_for_user(
         )
 
         db.add(recommendation)
+
         saved_count += 1
 
-    # 💾 Save all recommendations together.
+    # 💾 Save all strong recommendations together.
     await db.commit()
 
     return saved_count
