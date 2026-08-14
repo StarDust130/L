@@ -15,27 +15,37 @@ async def calculate_compatibility_score(
     profile: dict,
     job: Job,
 ) -> AICompatibilityResult:
-    """Calculate how well a job matches a candidate."""
+    """🤖 Score how relevant one job is to one candidate."""
 
-    # 🧠 Give the AI only the data it needs.
     prompt = f"""
-You are a job compatibility scorer.
+You are a strict job compatibility scorer.
 
-Compare the candidate with the job.
+Score how well this job matches this candidate.
 
-Return ONLY JSON:
+Return ONLY valid JSON:
 {{
     "score": 0
 }}
 
 Score from 0 to 100.
 
-Consider:
-- Skills
-- Experience
-- Role relevance
-- Location
-- Overall fit
+Use these signals:
+
+1. Role relevance
+2. Required skills
+3. Candidate experience
+4. Location / remote preference
+5. Overall career fit
+
+Important:
+- Do NOT give a high score just because one skill matches.
+- If the job is clearly unrelated to the candidate's target roles,
+  give a low score.
+- If the job is clearly a sales, marketing, HR, finance, or unrelated
+  role for a software/AI candidate, score it very low.
+- Missing job information should reduce confidence.
+- Be strict. A recommendation means the candidate should realistically
+  consider applying.
 
 Candidate:
 {json.dumps(profile, ensure_ascii=False)}
@@ -65,9 +75,8 @@ Description: {job.description or "No description"}
     content = response.choices[0].message.content
 
     if not content:
-        raise ValueError("AI returned empty response")
+        raise ValueError("AI returned an empty compatibility score")
 
-    # 🛡️ Validate the AI response.
     result = AICompatibilityResult.model_validate_json(content)
 
     logger.info(
