@@ -1,6 +1,7 @@
-from app.db.db import Base
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
+
+from app.db.db import Base
 
 
 class Company(Base):
