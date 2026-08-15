@@ -4,7 +4,7 @@ from typing import Any
 from groq.types.chat import ChatCompletionToolParam
 
 from app.agent.tools.jobs import get_my_recommendations
-from app.agent.tools.sources import get_known_sources
+from app.agent.tools.sources import get_known_sources, save_source
 from app.agent.tools.web import fetch_page, search_web
 
 # 🤖 Tools exposed to the LLM.
@@ -84,6 +84,48 @@ TOOL_SCHEMAS: list[ChatCompletionToolParam] = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "save_source",
+            "description": (
+                "Save a genuinely useful web source for future "
+                "job and company discovery. Only use this after "
+                "investigating the source and determining that it "
+                "contains valuable, relevant opportunities."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Human-readable source name.",
+                    },
+                    "url": {
+                        "type": "string",
+                        "description": "Canonical URL of the source.",
+                    },
+                    "source_type": {
+                        "type": "string",
+                        "description": (
+                            "Type such as job_board, "
+                            "company_directory, or career_platform."
+                        ),
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Why this source is useful.",
+                    },
+                },
+                "required": [
+                    "name",
+                    "url",
+                    "source_type",
+                    "description",
+                ],
+            },
+        },
+    },
 ]
 
 
@@ -96,4 +138,5 @@ TOOL_FUNCTIONS: dict[
     "search_web": search_web,
     "fetch_page": fetch_page,
     "get_known_sources": get_known_sources,
+    "save_source": save_source,
 }

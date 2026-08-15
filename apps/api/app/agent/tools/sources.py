@@ -39,3 +39,52 @@ async def get_known_sources(
         }
         for source in sources
     ]
+
+
+async def save_source(
+    db: AsyncSession,
+    name: str,
+    url: str,
+    source_type: str,
+    description: str | None = None,
+) -> SourceResult:
+    """
+    💾 Save a useful discovery source.
+
+    We check the URL first so L cannot create duplicate sources.
+    """
+
+    result = await db.execute(select(Source).where(Source.url == url))
+
+    existing = result.scalar_one_or_none()
+
+    # ♻️ Source already exists.
+    if existing:
+        return {
+            "id": existing.id,
+            "name": existing.name,
+            "url": existing.url,
+            "source_type": existing.source_type,
+            "quality_score": existing.quality_score,
+        }
+
+    source = Source(
+        name=name,
+        url=url,
+        source_type=source_type,
+        description=description,
+        quality_score=0.0,
+    )
+
+    db.add(source)
+
+    await db.commit()
+    await db.refresh(source)
+
+    return {
+        "id": source.id,
+        "name": source.name,
+        "url": source.url,
+        "source_type": source.source_type,
+        "quality_score": source.quality_score,
+    }
