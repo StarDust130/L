@@ -1,5 +1,6 @@
 from typing import TypedDict
 
+import httpx
 from tavily import TavilyClient
 
 from app.core.config import get_settings
@@ -8,7 +9,7 @@ settings = get_settings()
 
 
 class WebSearchResult(TypedDict):
-    """🌐 Small, clean result returned to the agent."""
+    """🌐 Clean web-search result returned to L."""
 
     title: str
     url: str
@@ -19,20 +20,12 @@ class WebSearchResult(TypedDict):
 async def search_web(
     query: str,
 ) -> list[WebSearchResult]:
-    """
-    🔎 Search the web for information relevant to the user's request.
+    """🔎 Search the web for current information."""
 
-    The search provider does the web search.
-    This function only normalizes the results into the small
-    structure our agent needs.
-    """
-
-    # 🔐 API key stays on the backend.
     client = TavilyClient(
         api_key=settings.tavily_api_key,
     )
 
-    # 💰 Basic search keeps the first version cheap.
     response = client.search(
         query=query,
         search_depth="basic",
@@ -54,3 +47,34 @@ async def search_web(
         )
 
     return results
+
+
+async def fetch_page(url: str) -> str:
+    """
+    🌐 Fetch a real webpage.
+
+    Search tells L:
+        "This page looks interesting."
+
+    fetch_page gives L:
+        "Here is the actual page so you can investigate it."
+    """
+
+    try:
+        async with httpx.AsyncClient(
+            timeout=20,
+            follow_redirects=True,
+            headers={
+                # 🕵️ Identify our crawler politely.
+                "User-Agent": "L-Career-Agent/1.0",
+            },
+        ) as client:
+            response = await client.get(url)
+
+            response.raise_for_status()
+
+            # 🛡️ Prevent gigantic pages from entering the LLM.
+            return response.text[:30_000]
+
+    except httpx.HTTPError as exc:
+        return f"PAGE_FETCH_FAILED: {exc}"
