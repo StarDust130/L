@@ -4,6 +4,7 @@ from typing import Any
 from groq.types.chat import ChatCompletionToolParam
 
 from app.agent.tools.jobs import get_my_recommendations
+from app.agent.tools.sources import get_known_sources
 from app.agent.tools.web import fetch_page, search_web
 
 # 🤖 Tools exposed to the LLM.
@@ -68,6 +69,21 @@ TOOL_SCHEMAS: list[ChatCompletionToolParam] = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_known_sources",
+            "description": (
+                "Get trusted web sources that L already knows "
+                "for discovering jobs and companies."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        },
+    },
 ]
 
 
@@ -79,4 +95,5 @@ TOOL_FUNCTIONS: dict[
     "get_my_recommendations": get_my_recommendations,
     "search_web": search_web,
     "fetch_page": fetch_page,
+    "get_known_sources": get_known_sources,
 }
