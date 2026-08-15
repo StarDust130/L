@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.company.company_router import router as company_router
 from app.core.auth import require_user
 from app.core.config import get_settings
 from app.core.logger import setup_logging
@@ -45,7 +46,6 @@ app.add_middleware(
 )
 
 
-
 # 🛣️ Routes
 @app.get("/me")
 def get_current_user(
@@ -58,6 +58,7 @@ app.include_router(resumes_router)  # 📄 Resume routes
 app.include_router(profile_router)  # 👤 Profile routes
 app.include_router(job_router)  # 👙 Job routes
 app.include_router(telegram_router)  # 💬 Telegram routes
+app.include_router(company_router)  # 🏢 Company routes
 
 
 # ❤️ Health check
