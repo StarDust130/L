@@ -1,9 +1,10 @@
 from logging.config import fileConfig
 
+from sqlalchemy import engine_from_config, pool
+
 from alembic import context
 from app.core.config import get_settings
 from app.db.db import Base
-from sqlalchemy import engine_from_config, pool
 
 # ⚙️ Get Alembic's configuration object.
 config = context.config
@@ -29,6 +30,7 @@ from app.job.job_model import Job  # noqa: F401
 from app.job.recommendation_model import Recommendation  # noqa: F401
 from app.job.seen_job_model import SeenJob  # noqa: F401
 from app.profile.profile_model import CandidateProfileRecord  # noqa: F401
+from app.source.source_model import Source  # noqa: F401
 from app.telegram.telegram_account_model import TelegramAccount  # noqa: F401
 
 # 📋 Tell Alembic about our SQLAlchemy tables.
