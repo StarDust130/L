@@ -106,27 +106,30 @@
 
 ----
 
-                              🧠 L
-                                   │
-                    ┌───────────────┴───────────────┐
-                    ↓                               ↓
-          🔎 Source Discovery              🔄 Source Monitor
-          "Find NEW sources"              "Check KNOWN sources"
-                    │                               │
-                    ↓                               ↓
-               Sources                         Sources
-                    └───────────────┬───────────────┘
-                                   ↓
-                              💼 Job Discovery
-                                   ↓
+                                   👤 USER
+                                        │
+                              Resume/Profile
+                                        │
+                                        ↓
+                                   L 🧠
+                                        │
+                         ┌─────────────┼─────────────┐
+                         ↓             ↓             ↓
+                    Discover       Monitor        Track
+                    Sources        Sources       Companies
+                         ↓             ↓             ↓
+                         └─────────────┼─────────────┘
+                                        ↓
+                                   💼 Jobs
+                                        ↓
                               🧹 Validate
-                                   ↓
+                                        ↓
                               ♻️ Deduplicate
-                                   ↓
-                              Jobs DB
-                                   ↓
-                              🎯 Match
-                                   ↓
-                         Recommendations
-                                   ↓
-                         📱 Telegram               
+                                        ↓
+                              🎯 Match User
+                                        ↓
+                              ⭐ Best Opportunities
+                                        ↓
+                              💾 Remember
+                                        ↓
+                              📱 Telegram
