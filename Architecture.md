@@ -102,4 +102,31 @@
                9. Rank for user
                → match_jobs()
 
-               10. Return best 5–10                
+               10. Return best 5–10 
+
+----
+
+                              🧠 L
+                                   │
+                    ┌───────────────┴───────────────┐
+                    ↓                               ↓
+          🔎 Source Discovery              🔄 Source Monitor
+          "Find NEW sources"              "Check KNOWN sources"
+                    │                               │
+                    ↓                               ↓
+               Sources                         Sources
+                    └───────────────┬───────────────┘
+                                   ↓
+                              💼 Job Discovery
+                                   ↓
+                              🧹 Validate
+                                   ↓
+                              ♻️ Deduplicate
+                                   ↓
+                              Jobs DB
+                                   ↓
+                              🎯 Match
+                                   ↓
+                         Recommendations
+                                   ↓
+                         📱 Telegram               
