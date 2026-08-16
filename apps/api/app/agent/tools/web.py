@@ -41,7 +41,7 @@ async def search_web(
             {
                 "title": str(item.get("title", "")),
                 "url": str(item.get("url", "")),
-                "content": str(item.get("content", "")),
+                "content": str(item.get("content", ""))[:1200],
                 "score": float(item.get("score", 0)),
             }
         )
@@ -74,7 +74,7 @@ async def fetch_page(url: str) -> str:
             response.raise_for_status()
 
             # 🛡️ Prevent gigantic pages from entering the LLM.
-            return response.text[:30_000]
+            return response.text[:8_000]
 
     except httpx.HTTPError as exc:
         return f"PAGE_FETCH_FAILED: {exc}"
