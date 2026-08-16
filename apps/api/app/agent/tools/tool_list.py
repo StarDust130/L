@@ -30,17 +30,14 @@ TOOL_SCHEMAS: list[ChatCompletionToolParam] = [
         "function": {
             "name": "search_web",
             "description": (
-                "Search the internet for real, current information. "
-                "Use this when the user asks to find new jobs, "
-                "companies, career opportunities, or other information "
-                "that may not exist in the database."
+                "Search the internet for useful websites, companies, or job sources."
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": ("A precise web search query."),
+                        "description": "The search query.",
                     },
                 },
                 "required": ["query"],
@@ -52,17 +49,15 @@ TOOL_SCHEMAS: list[ChatCompletionToolParam] = [
         "function": {
             "name": "fetch_page",
             "description": (
-                "Open and inspect a webpage when a search result "
-                "looks useful. Use this to investigate a company, "
-                "career page, job listing, funding announcement, "
-                "or other relevant source."
+                "Fetch and inspect a webpage to determine "
+                "whether it is a useful job or company source."
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "url": {
                         "type": "string",
-                        "description": "The exact webpage URL to inspect.",
+                        "description": "The webpage URL to inspect.",
                     },
                 },
                 "required": ["url"],
