@@ -20,7 +20,7 @@ class Job(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
 
     # 🏷️ Job ID from external source (LinkedIn, Indeed, etc.)
-    external_id: Mapped[str] = mapped_column(String(100))
+    external_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
     # 🧬 Used to detect the same job across different sources.
     fingerprint: Mapped[str] = mapped_column(
@@ -48,7 +48,7 @@ class Job(Base):
     salary: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # 🔗 Application URL
-    apply_url: Mapped[str] = mapped_column(String(1000))
+    apply_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
 
     # 📌 Source platform (LinkedIn, Indeed, etc.)
     source: Mapped[str] = mapped_column(String(50))

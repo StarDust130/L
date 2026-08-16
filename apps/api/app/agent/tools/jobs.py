@@ -1,4 +1,5 @@
-from typing import TypedDict
+from typing import Any, TypedDict
+from urllib.parse import urljoin
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,6 +7,45 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.company.company_model import Company
 from app.job.job_model import Job
 from app.job.recommendation_model import Recommendation
+
+
+class DiscoveredJob(TypedDict):
+    """💼 Raw job data extracted from a source."""
+
+    title: str
+    company: str
+    location: str | None
+    salary: str | None
+    description: str | None
+    apply_url: str | None
+
+
+def normalize_discovered_job(raw_job: Any, source_url: str) -> DiscoveredJob | None:
+    """Convert one extractor result into the discovered-job contract."""
+    if not isinstance(raw_job, dict):
+        return None
+
+    title = raw_job.get("title")
+    company = raw_job.get("company")
+
+    def optional_text(value: Any) -> str | None:
+        if not isinstance(value, str):
+            return None
+        value = value.strip()
+        return value or None
+
+    apply_url = optional_text(raw_job.get("apply_url"))
+    if apply_url:
+        apply_url = urljoin(source_url, apply_url)
+
+    return {
+        "title": title.strip() if isinstance(title, str) else "",
+        "company": company.strip() if isinstance(company, str) else "",
+        "location": optional_text(raw_job.get("location")),
+        "salary": optional_text(raw_job.get("salary")),
+        "description": optional_text(raw_job.get("description")),
+        "apply_url": apply_url,
+    }
 
 
 class JobRecommendation(TypedDict):

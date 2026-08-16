@@ -3,7 +3,7 @@ import logging
 
 from groq.types.chat import ChatCompletionMessageParam
 
-from app.agent.tools.jobs import JobRecommendation
+from app.agent.tools.jobs import DiscoveredJob, normalize_discovered_job
 from app.core.config import get_settings
 from app.llm.client import client
 
@@ -14,7 +14,8 @@ settings = get_settings()
 
 async def extract_jobs_from_page(
     page_text: str,
-) -> list[JobRecommendation]:
+    source_url: str,
+) -> list[DiscoveredJob]:
     """🧠 Extract real job listings from cleaned page text."""
 
     prompt = f"""
@@ -30,7 +31,7 @@ Return ONLY valid JSON:
             "location": "string or null",
             "salary": "string or null",
             "description": "string or null",
-            "apply_url": "string"
+            "apply_url": "string or null"
         }}
     ]
 }}
@@ -53,14 +54,22 @@ PAGE:
         }
     ]
 
-    response = await client.chat.completions.create(
-        model=settings.groq_model,
-        messages=messages,
-        temperature=0,
-        response_format={"type": "json_object"},
-    )
+    try:
+        response = await client.chat.completions.create(
+            model=settings.groq_model,
+            messages=messages,
+            temperature=0,
+            response_format={"type": "json_object"},
+        )
+    except Exception:
+        logger.exception("job_extraction_failed source=%s", source_url)
+        return []
 
-    content = response.choices[0].message.content
+    try:
+        content = response.choices[0].message.content
+    except Exception:
+        logger.exception("job_extraction_failed reason=invalid_response source=%s", source_url)
+        return []
 
     if not content:
         return []
@@ -71,9 +80,13 @@ PAGE:
         logger.warning("⚠️ Job extractor returned invalid JSON")
         return []
 
-    jobs = data.get("jobs", [])
+    jobs = data.get("jobs", []) if isinstance(data, dict) else []
 
     if not isinstance(jobs, list):
         return []
 
-    return jobs
+    return [
+        normalized
+        for raw_job in jobs
+        if (normalized := normalize_discovered_job(raw_job, source_url)) is not None
+    ]
