@@ -1,6 +1,7 @@
 from typing import TypedDict
 
 import httpx
+from bs4 import BeautifulSoup
 from tavily import TavilyClient
 
 from app.core.config import get_settings
@@ -49,15 +50,10 @@ async def search_web(
     return results
 
 
+# Fetch and clean a webpage 🕸️🌐🧹
 async def fetch_page(url: str) -> str:
     """
-    🌐 Fetch a real webpage.
-
-    Search tells L:
-        "This page looks interesting."
-
-    fetch_page gives L:
-        "Here is the actual page so you can investigate it."
+    🌐 Fetch and clean a real webpage.
     """
 
     try:
@@ -65,16 +61,25 @@ async def fetch_page(url: str) -> str:
             timeout=20,
             follow_redirects=True,
             headers={
-                # 🕵️ Identify our crawler politely.
                 "User-Agent": "L-Career-Agent/1.0",
             },
         ) as client:
             response = await client.get(url)
-
             response.raise_for_status()
 
+            soup = BeautifulSoup(response.text, "html.parser")
+
+            # 🧹 Remove elements that are almost always noise.
+            for element in soup(["script", "style", "noscript"]):
+                element.decompose()
+
+            # 🎯 Prefer the page's main content.
+            main = soup.find("main") or soup.body
+
+            text = main.get_text(separator=" ", strip=True) if main else ""
+
             # 🛡️ Prevent gigantic pages from entering the LLM.
-            return response.text[:8_000]
+            return text[:8_000]
 
     except httpx.HTTPError as exc:
         return f"PAGE_FETCH_FAILED: {exc}"
