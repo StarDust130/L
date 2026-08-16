@@ -48,7 +48,7 @@ Use tools to investigate information instead of guessing.
 Be concise and direct.
 """
 
-MAX_ITERATIONS = 5
+MAX_ITERATIONS = 3 # Only allow 3 iteration to save token , save money 😭
 
 
 async def run_agent(
@@ -76,6 +76,11 @@ async def run_agent(
             "🤖 agent_iteration=%s user_id=%s",
             iteration + 1,
             user_id,
+        )
+
+        logger.info(
+            "🛠️ available_tools=%s",
+            [tool["function"]["name"] for tool in TOOL_SCHEMAS], #type: ignore
         )
 
         # 3️⃣ Send messages to Groq
@@ -136,6 +141,13 @@ async def run_agent(
                             db=db,
                             user_id=user_id,
                         )
+
+                    elif tool_name == "save_source":
+                        result = await tool(
+                            db=db,
+                            **arguments,
+                        )
+
                     else:
                         result = await tool(**arguments)
 
