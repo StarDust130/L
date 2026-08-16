@@ -94,9 +94,9 @@ Phase 3 — Intelligence Engine
 
 ✅ Job storage
 ✅ Company storage
-🚧 Web research tools
-🚧 Company discovery
-🚧 Job discovery
+✅ Web research tools
+✅ Company discovery
+✅ Job discovery
 🚧 Normalization
 🚧 Deduplication
 🚧 Change detection
