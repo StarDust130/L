@@ -90,12 +90,6 @@ async def handle_chat_message(
         await send_login_required_message_with_roast(chat_id)
         return
 
-    await _merge_user_preferences(
-        db=db,
-        clerk_user_id=account.clerk_user_id,
-        message=message,
-    )
-
     # 4️⃣) 🤖 Show AI thinking message
     typing_message_id = await send_typing(chat_id)
 
@@ -106,6 +100,13 @@ async def handle_chat_message(
             chat_id,
             typing_message_id,
         )
+
+    # 🔄 Merge user preferences from the message
+        await _merge_user_preferences(
+                db=db,
+                clerk_user_id=account.clerk_user_id,
+                message=message,
+            )
 
         # 5️⃣) 🤖 Ask AI
         try:
