@@ -1,4 +1,5 @@
 import logging
+import random
 import re
 import secrets  # 🔐 Generate secure random codes
 from datetime import UTC, datetime, timedelta  # 🕐 Work with time
@@ -28,7 +29,7 @@ logger = logging.getLogger(__name__)
 OTP_MINUTES = 10
 
 
-#! 📥 (MAIN = OG) Handle every incoming Telegram message
+# ! 📥 (MAIN = OG) Handle every incoming Telegram message
 async def handle_telegram_message(
     db: AsyncSession,
     chat_id: str,
@@ -80,15 +81,7 @@ async def handle_chat_message(
 
     # 3️⃣) 🚫 User is not connected
     if account is None:
-        await send_message(
-            chat_id=chat_id,
-            text=(
-                "🔐 <b>Please connect your L account first.</b>\n\n"
-                "Open L, log in, and connect Telegram "
-                "from your dashboard."
-            ),
-            parse_mode="HTML",
-        )
+        await send_login_required_message_with_roast(chat_id)
         return
 
     await _merge_user_preferences(
@@ -142,9 +135,9 @@ async def handle_chat_message(
     )
 
 
-
 # ?================================ Telegram OTP Handle============================
 # ?================================================================================
+
 
 def _ensure_utc(value: datetime | None) -> datetime | None:
     """Normalize stored SQLite datetimes to timezone-aware UTC values."""
@@ -309,6 +302,7 @@ async def handle_link_code(
 # ?================================ User Perfernces  ==============================
 # ?================================================================================
 
+
 def _extract_user_preferences(message: str) -> list[str]:
     """Turn natural-language preferences into a simple candidate preference list."""
     phrases: list[str] = []
@@ -403,6 +397,7 @@ async def _merge_user_preferences(
 # ? ================================ Telegram UI Cards==============================
 # ? ================================================================================
 
+
 # 👋 Handle the Telegram /start command
 async def handle_start(
     db: AsyncSession,
@@ -418,17 +413,17 @@ async def handle_start(
     # 📦 Get account
     account = result.scalar_one_or_none()
 
-    # ✅ Show connected user menu
+    # ✅ user found
     if account:
-        await send_connected_welcome(chat_id)
+        await welcome_back(chat_id)
         return
 
-    # 🔐 Show connection instructions
-    await send_connected_welcome(chat_id)
+    # 🔐  User NOT found -> send connect a/c card
+    await send_login_first(chat_id)
 
 
 # 👋 Send welcome message to connected user
-async def send_connected_welcome(
+async def welcome_back(
     chat_id: str,
 ) -> None:
     # 🎛️ Create dashboard buttons
@@ -470,6 +465,158 @@ async def send_connected_welcome(
             "Skills, interviews, salary and career paths.\n\n"
             "Just tell me what you need. 🚀"
         ),
+        reply_markup=keyboard,
+        parse_mode="HTML",
+    )
+
+
+# Login first message for new users
+async def send_login_first(
+    chat_id: str,
+) -> None:
+    keyboard = {
+        "inline_keyboard": [
+            [{"text": "🚀 Get Started", "url": f"{settings.web_app_url}/login"}],
+            [
+                {
+                    "text": "✨ How L Works",
+                    "url": "https://i.giphy.com/u3bdObCPWIpdaxIdRZ.webp",
+                }
+            ],
+        ]
+    }
+
+    await send_message(
+        chat_id=chat_id,
+        text=(
+            "<b>👋 Welcome to L</b>\n"
+            "<i>Your Jobless AI Agent</i> 🤖\n\n"
+            "Ready to make your job search <b>faster, smarter & easier?</b> 🚀\n\n"
+            "<b>⚡ Get started in 4 simple steps</b>\n\n"
+            "1️⃣ <b>Login</b> to your L account\n"
+            "2️⃣ <b>Upload</b> your resume 📄\n"
+            "3️⃣ <b>Get your verification code</b> 🔐\n"
+            "4️⃣ <b>Paste the code here</b> 💬\n\n"
+            "<b>🎯 Once you're in, L can help you:</b>\n"
+            "💼 Discover jobs that match your profile\n"
+            "✨ Optimize your resume for better results\n"
+            "🧠 Get personalized career guidance\n"
+            "🥳 Find Baddies near you and more...\n\n"
+            "<b>Ready to level up your job search?</b> 🔥\n"
+            "Tap <b>Get Started</b> below 👇"
+        ),
+        reply_markup=keyboard,
+        parse_mode="HTML",
+    )
+
+
+async def send_login_required_message_with_roast(
+    chat_id: str,
+) -> None:
+    messages = [
+        (
+            "🤦 <b>BRO. LOGIN.</b>\n\n"
+            "How many times do I have to say it? 😂\n\n"
+            "🔐 Login to L\n"
+            "🔢 Get your OTP\n"
+            "💬 Send the OTP here\n\n"
+            "<b>Then</b> we start. Simple. 😭"
+        ),
+        (
+            "😭 <b>Dude… you're still not logged in.</b>\n\n"
+            "I'm literally sitting here waiting for your OTP. 🤖\n\n"
+            "Go <b>LOGIN TO L</b> → get the OTP → send it here.\n\n"
+            "Please don't make me explain this again. 😂"
+        ),
+        (
+            "🧠 <b>Bro, use the login button.</b>\n\n"
+            "Not the complicated strategy.\n"
+            "Not a 17-step plan.\n"
+            "Just… <b>LOGIN.</b> 😂\n\n"
+            "Get your OTP and paste it here.\n\n"
+            "Then we work. 🚀"
+        ),
+        (
+            "🤨 <b>My brother in job hunting…</b>\n\n"
+            "You forgot the most important step:\n"
+            "<b>LOGGING IN.</b> 😭\n\n"
+            "🔐 Login → 🔢 OTP → 💬 Send it here\n\n"
+            "Do that and I'll stop bullying you. Deal? 🤝😂"
+        ),
+        (
+            "💀 <b>You're making this harder than it is.</b>\n\n"
+            "I need ONE thing from you:\n\n"
+            "👉 Login to L\n"
+            "👉 Get your OTP\n"
+            "👉 Send it to me\n\n"
+            "That's literally it, genius. 😂\n\n"
+            "Now press the button."
+        ),
+        (
+            "🤖 <b>AI diagnosis:</b>\n\n"
+            "User has successfully avoided logging in. 😂\n\n"
+            "<b>Treatment:</b>\n"
+            "🔐 Login to L\n"
+            "🔢 Get OTP\n"
+            "💬 Send OTP here\n\n"
+            "<i>Congratulations. You're now ready to follow instructions.</i> 😭"
+        ),
+        (
+            "😤 <b>DUDE. THE LOGIN BUTTON.</b>\n\n"
+            "It's right there. 👇\n"
+            "I'm not hiding it from you.\n"
+            "I'm not asking you to solve a puzzle.\n\n"
+            "<b>Login → OTP → Send it here.</b>\n\n"
+            "Now let's get your job search moving. 🚀"
+        ),
+        (
+            "😂 <b>Okay, dummy mode detected.</b>\n\n"
+            "Let's make this extremely simple:\n\n"
+            "1️⃣ Press <b>Login Now</b>\n"
+            "2️⃣ Get your <b>OTP</b>\n"
+            "3️⃣ Send the OTP here\n\n"
+            "That's the whole mission. 🫡\n\n"
+            "<b>Go. Login.</b> 🚀"
+        ),
+        (
+            "🙄 <b>Still here?</b>\n\n"
+            "Bro, I can't start until you login. 😭\n\n"
+            "You're literally one button away.\n\n"
+            "🔐 <b>LOGIN NOW</b>\n"
+            "🔢 Get OTP\n"
+            "💬 Send OTP\n\n"
+            "<i>I'll be waiting… again.</i> 😂"
+        ),
+        (
+            "🔥 <b>STOP SCROLLING. LOGIN.</b>\n\n"
+            "You want jobs, right? 💼\n"
+            "You want the AI to help, right? 🤖\n\n"
+            "Then do the one thing I asked:\n"
+            "<b>LOGIN → OTP → SEND IT HERE.</b>\n\n"
+            "Come on, champ. 😂🚀"
+        ),
+    ]
+
+    keyboard = {
+        "inline_keyboard": [
+            [
+                {
+                    "text": "🚀 LOGIN NOW",
+                    "url": f"{settings.web_app_url}/login",
+                }
+            ],
+            [
+                {
+                    "text": "❓ Why do I need to login?",
+                    "url": "https://i.giphy.com/u3bdObCPWIpdaxIdRZ.webp",
+                }
+            ],
+        ]
+    }
+
+    await send_message(
+        chat_id=chat_id,
+        text=random.choice(messages),
         reply_markup=keyboard,
         parse_mode="HTML",
     )
