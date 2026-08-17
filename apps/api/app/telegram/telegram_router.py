@@ -34,24 +34,24 @@ async def telegram_webhook(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    # 📦 Read Telegram update
+    #1️⃣) 📦 Read Telegram update
     update = await request.json()
 
-    # 💬 Get message from update
+    #2️⃣) 💬 Get message from update
     message = update.get("message")
 
     # ⏭️ Ignore updates without messages
     if not message:
         return {"status": "ignored"}
 
-    # 📝 Get message text
+    #3️⃣) 📝 Get message text
     text = message.get("text")
 
     # ⏭️ Ignore messages without text
     if not text:
         return {"status": "ignored"}
 
-    # 🆔 Get Telegram chat ID
+    #4️⃣) 🆔 Get Telegram chat ID
     chat_id = str(message["chat"]["id"])
 
     # 🤖 Process the Telegram message
