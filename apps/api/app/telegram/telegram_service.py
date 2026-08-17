@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import random
 import re
@@ -18,7 +19,9 @@ from app.telegram.telegram_account_model import (
 )  # 📱 Telegram account model
 from app.telegram.telegram_client import (
     send_message,
-    send_typing,  # 📤 Send Telegram message
+    send_typing,
+    stop_typing,
+    update_typing,  # 📤 Send Telegram message
 )
 
 # ⚙️ Load application settings
@@ -47,11 +50,14 @@ async def handle_telegram_message(
         return
 
     # 3️⃣) 🔐 Handle 8-digit link code
-    if message.isdigit() and len(message) == 8:
+    # 🔐 send only  otp number not any text here
+    match = re.search(r"(?<!\d)\d{8}(?!\d)", message)
+    if match:
+        code = match.group(0)
         await handle_link_code(
             db=db,
             chat_id=chat_id,
-            code=message,
+            code=code,
         )
         return
 
@@ -90,29 +96,48 @@ async def handle_chat_message(
         message=message,
     )
 
-    # 4️⃣) ⌨️ Show typing
-    await send_typing(chat_id)
+    # 4️⃣) 🤖 Show AI thinking message
+    typing_message_id = await send_typing(chat_id)
 
-    # 5️⃣) 🤖 Ask AI
     try:
-        response = await run_agent(
-            message=message,
-            user_id=account.clerk_user_id,
-            db=db,
+        await asyncio.sleep(1)
+
+        await update_typing(
+            chat_id,
+            typing_message_id,
         )
-    except Exception:
-        logger.exception("Telegram chat agent execution failed")
-        await send_message(
-            chat_id=chat_id,
-            text=(
-                "I hit a temporary issue while processing that request. 😭 "
-                "Please try again in a moment."
-            ),
+
+        # 5️⃣) 🤖 Ask AI
+        try:
+            response = await run_agent(
+                message=message,
+                user_id=account.clerk_user_id,
+                db=db,
+            )
+        except Exception:
+            logger.exception("Telegram chat agent execution failed")
+
+            await send_message(
+                chat_id=chat_id,
+                text=(
+                    "I hit a temporary issue while processing that request. 😭 "
+                    "Please try again in a moment."
+                ),
+            )
+            return
+
+    finally:
+        # 🧹 Remove the thinking message after AI finishes
+        await stop_typing(
+            chat_id,
+            typing_message_id,
         )
-        return
 
     if isinstance(response, str):
-        response = AgentResult(type="text", content=response)
+        response = AgentResult(
+            type="text",
+            content=response,
+        )
     elif not isinstance(response, AgentResult):
         response = AgentResult(
             type="text",
