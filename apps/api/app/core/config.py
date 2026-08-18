@@ -18,6 +18,7 @@ class Settings(BaseSettings):
 
     # Gemini config
     gemini_api_key: str = "test"
+    gemini_model: str = "gemini-3.5-flash-lite"
 
     # 💾 Postgres database
     database_url: str = "sqlite+aiosqlite:///./local.db"
