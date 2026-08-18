@@ -1,8 +1,9 @@
 from typing import Any
 
-from app.agent.memory.model import UserMemory
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.agent.memory.memory_model import UserMemory
 
 
 async def get_memory(
