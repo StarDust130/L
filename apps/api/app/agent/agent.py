@@ -1,5 +1,6 @@
 import json
-from typing import Any
+import logging
+from typing import Any, cast
 
 from google.genai import types
 from google.genai.errors import APIError
@@ -13,6 +14,7 @@ from app.core.config import get_settings
 from app.llm.client import gemini_client
 
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 
 MAX_ITERATIONS = 7
@@ -24,25 +26,23 @@ async def run_agent(
     message: str,
     user_id: str,
 ) -> AgentResult:
-    """
-    Simple Gemini agent loop.
+    """Run the Gemini agent loop."""
 
-    User
-      ↓
-    Gemini
-      ↓
-    Text → finish
-      ↓
-    Tool → run tool
-      ↓
-    Send tool result to Gemini
-      ↓
-    Repeat
-    """
+    logger.info(
+        "🤖 Agent started | user=%s | message=%s",
+        user_id,
+        message,
+    )
 
     user_context = await build_user_context(
         db=db,
         user_id=user_id,
+    )
+
+    logger.info(
+        "🧠 User context loaded | profile=%s | memory=%s",
+        bool(user_context.get("profile")),
+        bool(user_context.get("memory")),
     )
 
     contents: list[types.Content] = [
@@ -50,24 +50,40 @@ async def run_agent(
             role="user",
             parts=[
                 types.Part.from_text(
-                    text=f"""
-    USER CONTEXT:
-    {json.dumps(user_context, default=str)}
-
-    USER MESSAGE:
-    {message}
-    """,
+                    text=(
+                        "USER CONTEXT:\n"
+                        f"{json.dumps(user_context, default=str)}\n\n"
+                        "USER MESSAGE:\n"
+                        f"{message}"
+                    ),
                 ),
             ],
-        )
+        ),
     ]
 
     tools = get_gemini_tools()
 
-    for _ in range(MAX_ITERATIONS):
-        # ------------------------------------------------
-        # Ask Gemini
-        # ------------------------------------------------
+    tool_names = [
+        declaration.name
+        for tool in tools
+        for declaration in (tool.function_declarations or [])
+        if declaration.name
+    ]
+
+    logger.info(
+        "🔧 Tools available | %s",
+        tool_names,
+    )
+
+    for iteration in range(1, MAX_ITERATIONS + 1):
+        logger.info(
+            "🔄 Agent iteration %d/%d",
+            iteration,
+            MAX_ITERATIONS,
+        )
+
+        tool_config = None
+
         try:
             response = await gemini_client.aio.models.generate_content(
                 model=settings.gemini_model,
@@ -75,7 +91,7 @@ async def run_agent(
                 config=types.GenerateContentConfig(
                     system_instruction=SYSTEM_PROMPT,
                     tools=tools,
-                    temperature=0.2,
+                    tool_config=tool_config,
                     automatic_function_calling=(
                         types.AutomaticFunctionCallingConfig(
                             disable=True,
@@ -85,30 +101,42 @@ async def run_agent(
             )
 
         except APIError as error:
-            print(f"Gemini API error: {error}")
+            logger.error(
+                "❌ Gemini API error | iteration=%d | error=%s",
+                iteration,
+                error,
+            )
 
             return AgentResult(
                 type="text",
                 content="Sorry, I couldn't finish that request right now.",
             )
 
-        # ------------------------------------------------
-        # No tool call = Gemini is finished
-        # ------------------------------------------------
-        function_calls = response.function_calls
+        function_calls = response.function_calls or []
 
+        # Gemini has finished.
         if not function_calls:
+            logger.info(
+                "✅ Gemini finished | iteration=%d | text=%s",
+                iteration,
+                (response.text or "")[:300],
+            )
+
             return AgentResult(
                 type="text",
                 content=response.text or "",
             )
 
-        # ------------------------------------------------
-        # Get Gemini's message
-        # ------------------------------------------------
+        logger.info(
+            "🛠️ Gemini requested %d tool call(s)",
+            len(function_calls),
+        )
+
         candidates = response.candidates or []
 
         if not candidates:
+            logger.error("❌ Gemini returned no candidates")
+
             return AgentResult(
                 type="text",
                 content="Gemini returned no response.",
@@ -117,6 +145,8 @@ async def run_agent(
         assistant_content = candidates[0].content
 
         if assistant_content is None:
+            logger.error("❌ Gemini returned empty assistant content")
+
             return AgentResult(
                 type="text",
                 content="Gemini returned an invalid response.",
@@ -124,15 +154,16 @@ async def run_agent(
 
         contents.append(assistant_content)
 
-        # ------------------------------------------------
-        # Run requested tools
-        # ------------------------------------------------
         tool_parts: list[types.Part] = []
 
         for function_call in function_calls:
             tool_name = function_call.name
 
             if not tool_name:
+                logger.error(
+                    "❌ Gemini returned a tool call without a name",
+                )
+
                 return AgentResult(
                     type="text",
                     content="Gemini returned an invalid tool call.",
@@ -140,12 +171,23 @@ async def run_agent(
 
             arguments = dict(function_call.args or {})
 
-            # If this tool crashes, the error stops the agent.
+            logger.info(
+                "🔧 Tool requested | name=%s | args=%s",
+                tool_name,
+                arguments,
+            )
+
             result = await execute_tool(
                 tool_name=tool_name,
                 arguments=arguments,
                 db=db,
                 user_id=user_id,
+            )
+
+            logger.info(
+                "✅ Tool finished | name=%s | result=%s",
+                tool_name,
+                result[:500],
             )
 
             tool_parts.append(
@@ -154,22 +196,26 @@ async def run_agent(
                     response={
                         "output": result,
                     },
-                )
+                ),
             )
 
-        # ------------------------------------------------
-        # Send tool results back to Gemini
-        # ------------------------------------------------
         contents.append(
             types.Content(
                 role="user",
                 parts=tool_parts,
-            )
+            ),
         )
 
-    # ------------------------------------------------
-    # Maximum iterations reached
-    # ------------------------------------------------
+        logger.info(
+            "📨 Tool results sent back to Gemini | iteration=%d",
+            iteration,
+        )
+
+    logger.warning(
+        "⚠️ Maximum iterations reached | max=%d",
+        MAX_ITERATIONS,
+    )
+
     return AgentResult(
         type="text",
         content="I couldn't finish that request.",
@@ -183,14 +229,22 @@ async def execute_tool(
     db: AsyncSession,
     user_id: str,
 ) -> str:
-    """
-    Run the tool Gemini requested.
-    """
+    """Run the tool Gemini requested."""
 
     tool = TOOL_FUNCTIONS.get(tool_name)
 
     if tool is None:
+        logger.error(
+            "❌ Unknown tool requested | name=%s",
+            tool_name,
+        )
+
         return f"Tool '{tool_name}' does not exist."
+
+    logger.info(
+        "▶️ Executing tool | name=%s",
+        tool_name,
+    )
 
     if tool_name == "get_my_recommendations":
         result = await tool(
@@ -204,6 +258,24 @@ async def execute_tool(
             **arguments,
         )
 
+    elif tool_name == "save_memory":
+        logger.info(
+            "🧠 Saving memory | category=%s | key=%s | value=%s",
+            arguments.get("category"),
+            arguments.get("key"),
+            arguments.get("value"),
+        )
+
+        result = await tool(
+            db=db,
+            user_id=user_id,
+            memory_data={
+                arguments["category"]: {
+                    arguments["key"]: arguments["value"],
+                },
+            },
+        )
+
     else:
         result = await tool(**arguments)
 
@@ -211,11 +283,9 @@ async def execute_tool(
 
 
 def get_gemini_tools() -> list[types.Tool]:
-    """
-    Convert our existing tool schemas into Gemini's format.
-    """
+    """Convert our existing tool schemas into Gemini's format."""
 
-    functions = []
+    functions: list[types.FunctionDeclaration] = []
 
     for schema in TOOL_SCHEMAS:
         function = schema.get("function")
@@ -223,19 +293,43 @@ def get_gemini_tools() -> list[types.Tool]:
         if not isinstance(function, dict):
             continue
 
+        name = function.get("name")
+
+        if not isinstance(name, str) or not name:
+            continue
+
+        description = function.get("description", "")
+
+        if not isinstance(description, str):
+            description = str(description)
+
+        parameters = function.get("parameters")
+
+        if parameters is None:
+            parameters_json_schema: dict[str, Any] = {
+                "type": "object",
+            }
+        else:
+            parameters_json_schema = cast(
+                dict[str, Any],
+                parameters,
+            )
+
         functions.append(
             types.FunctionDeclaration(
-                name=function["name"],
-                description=function.get("description", ""),
-                parameters_json_schema=function.get(
-                    "parameters",
-                    {"type": "object"},
-                ),
-            )
+                name=name,
+                description=description,
+                parameters_json_schema=parameters_json_schema,
+            ),
         )
+
+    logger.info(
+        "🧰 Gemini tools loaded: %s",
+        [function.name for function in functions],
+    )
 
     return [
         types.Tool(
             function_declarations=functions,
-        )
+        ),
     ]
