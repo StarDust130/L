@@ -1,184 +1,227 @@
 import json
-import logging
+from typing import Any
 
-from groq.types.chat import (
-    ChatCompletionAssistantMessageParam,
-    ChatCompletionMessageParam,
-    ChatCompletionToolMessageParam,
-)
+from google.genai import types
+from google.genai.errors import APIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.agent.tools.tool_list import (
-    TOOL_FUNCTIONS,
-    TOOL_SCHEMAS,
-)
+from app.agent.prompt.v1_prompt import SYSTEM_PROMPT
+from app.agent.tools.tool_list import TOOL_FUNCTIONS, TOOL_SCHEMAS
+from app.agent.types import AgentResult
 from app.core.config import get_settings
-from app.llm.client import client
+from app.llm.client import gemini_client
 
-logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
-SYSTEM_PROMPT = """
-You are L, a personal career intelligence agent.
-
-Your long-term goal is to continuously discover the best
-career opportunities for the user.
-
-You are not a normal search engine.
-
-When discovering sources:
-
-1. Search for sources that can reveal valuable technology
-   companies or engineering jobs.
-2. Prefer sources with real, current opportunities.
-3. Prefer startup, technology, AI, software, and engineering
-   opportunities.
-4. Inspect promising sources with fetch_page before saving them.
-5. Do not save generic SEO pages, low-quality aggregators,
-   irrelevant websites, or random search results.
-6. Save only genuinely useful sources.
-7. Never invent information.
-
-The user profile and preferences are important when evaluating
-opportunities.
-
-Use tools to investigate information instead of guessing.
-
-Be concise and direct.
-"""
-
-MAX_ITERATIONS = 3 # Only allow 3 iteration to save token , save money 😭
+MAX_ITERATIONS = 10
 
 
+# ! MAIN AGENT LOOP 🔞
 async def run_agent(
     db: AsyncSession,
     message: str,
     user_id: str,
-) -> str:
-    """🧠 Run the L agent loop."""
+) -> AgentResult:
+    """
+    Simple Gemini agent loop.
 
-    # 1️⃣ Start conversation history
-    messages: list[ChatCompletionMessageParam] = [
-        {
-            "role": "system",
-            "content": SYSTEM_PROMPT,
-        },
-        {
-            "role": "user",
-            "content": message,
-        },
+    User
+      ↓
+    Gemini
+      ↓
+    Text → finish
+      ↓
+    Tool → run tool
+      ↓
+    Send tool result to Gemini
+      ↓
+    Repeat
+    """
+
+    contents: list[types.Content] = [
+        types.Content(
+            role="user",
+            parts=[
+                types.Part.from_text(text=message),
+            ],
+        )
     ]
 
-    # 2️⃣ Run agent loop
-    for iteration in range(MAX_ITERATIONS):
-        logger.info(
-            "🤖 agent_iteration=%s user_id=%s",
-            iteration + 1,
-            user_id,
-        )
+    tools = get_gemini_tools()
 
-        logger.info(
-            "🛠️ available_tools=%s",
-            [tool["function"]["name"] for tool in TOOL_SCHEMAS], #type: ignore
-        )
+    for _ in range(MAX_ITERATIONS):
+        # ------------------------------------------------
+        # Ask Gemini
+        # ------------------------------------------------
+        try:
+            response = await gemini_client.aio.models.generate_content(
+                model=settings.gemini_model,
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM_PROMPT,
+                    tools=tools,
+                    temperature=0.2,
+                    automatic_function_calling=(
+                        types.AutomaticFunctionCallingConfig(
+                            disable=True,
+                        )
+                    ),
+                ),
+            )
 
-        # 3️⃣ Send messages to Groq
-        response = await client.chat.completions.create(
-            model=settings.groq_model,
-            messages=messages,
-            tools=TOOL_SCHEMAS,
-            tool_choice="auto",
-            temperature=0.2,
-        )
+        except APIError as error:
+            print(f"Gemini API error: {error}")
 
-        # 4️⃣ Get assistant response
-        assistant = response.choices[0].message
+            return AgentResult(
+                type="text",
+                content="Sorry, I couldn't finish that request right now.",
+            )
 
-        # 5️⃣ Return final answer if no tool is needed
-        if not assistant.tool_calls:
-            return assistant.content or "I couldn't generate a response."
+        # ------------------------------------------------
+        # No tool call = Gemini is finished
+        # ------------------------------------------------
+        function_calls = response.function_calls
 
-        # 6️⃣ Convert assistant response into typed message
-        assistant_message: ChatCompletionAssistantMessageParam = {
-            "role": "assistant",
-            "content": assistant.content,
-            "tool_calls": [
-                {
-                    "id": tool_call.id,
-                    "type": "function",
-                    "function": {
-                        "name": tool_call.function.name,
-                        "arguments": tool_call.function.arguments,
+        if not function_calls:
+            return AgentResult(
+                type="text",
+                content=response.text or "",
+            )
+
+        # ------------------------------------------------
+        # Get Gemini's message
+        # ------------------------------------------------
+        candidates = response.candidates or []
+
+        if not candidates:
+            return AgentResult(
+                type="text",
+                content="Gemini returned no response.",
+            )
+
+        assistant_content = candidates[0].content
+
+        if assistant_content is None:
+            return AgentResult(
+                type="text",
+                content="Gemini returned an invalid response.",
+            )
+
+        contents.append(assistant_content)
+
+        # ------------------------------------------------
+        # Run requested tools
+        # ------------------------------------------------
+        tool_parts: list[types.Part] = []
+
+        for function_call in function_calls:
+            tool_name = function_call.name
+
+            if not tool_name:
+                return AgentResult(
+                    type="text",
+                    content="Gemini returned an invalid tool call.",
+                )
+
+            arguments = dict(function_call.args or {})
+
+            # If this tool crashes, the error stops the agent.
+            result = await execute_tool(
+                tool_name=tool_name,
+                arguments=arguments,
+                db=db,
+                user_id=user_id,
+            )
+
+            tool_parts.append(
+                types.Part.from_function_response(
+                    name=tool_name,
+                    response={
+                        "output": result,
                     },
-                }
-                for tool_call in assistant.tool_calls
-            ],
-        }
+                )
+            )
 
-        # 7️⃣ Add assistant message to history
-        messages.append(assistant_message)
+        # ------------------------------------------------
+        # Send tool results back to Gemini
+        # ------------------------------------------------
+        contents.append(
+            types.Content(
+                role="user",
+                parts=tool_parts,
+            )
+        )
 
-        # 8️⃣ Execute each requested tool
-        for tool_call in assistant.tool_calls:
-            tool_name = tool_call.function.name
-
-            # 9️⃣ Find tool function
-            tool = TOOL_FUNCTIONS.get(tool_name)
-
-            # 🔟 Handle missing tool
-            if tool is None:
-                tool_result = f"Tool '{tool_name}' is not available."
-
-            else:
-                try:
-                    # 1️⃣1️⃣ Parse tool arguments
-                    arguments = json.loads(tool_call.function.arguments)
-
-                    # 1️⃣2️⃣ Keep user_id controlled by backend
-                    if tool_name == "get_my_recommendations":
-                        result = await tool(
-                            db=db,
-                            user_id=user_id,
-                        )
-
-                    elif tool_name == "save_source":
-                        result = await tool(
-                            db=db,
-                            **arguments,
-                        )
-
-                    else:
-                        result = await tool(**arguments)
-
-                    # 1️⃣3️⃣ Convert result to JSON
-                    tool_result = json.dumps(
-                        result,
-                        default=str,
-                    )
-
-                except Exception:
-                    # 1️⃣4️⃣ Log tool error
-                    logger.exception(
-                        "❌ Tool failed: %s",
-                        tool_name,
-                    )
-
-                    tool_result = f"Tool '{tool_name}' failed."
-
-            # 1️⃣5️⃣ Build typed tool message
-            tool_message: ChatCompletionToolMessageParam = {
-                "role": "tool",
-                "tool_call_id": tool_call.id,
-                "content": tool_result,
-            }
-
-            # 1️⃣6️⃣ Add tool result to history
-            messages.append(tool_message)
-
-    # 1️⃣7️⃣ Stop after maximum iterations
-    logger.warning(
-        "🛑 Agent reached max iterations.",
+    # ------------------------------------------------
+    # Maximum iterations reached
+    # ------------------------------------------------
+    return AgentResult(
+        type="text",
+        content="I couldn't finish that request.",
     )
 
-    return "I couldn't finish that request right now. Please try again."
+
+# !  TOOL EXECUTION FUNCTION 🔧
+async def execute_tool(
+    tool_name: str,
+    arguments: dict[str, Any],
+    db: AsyncSession,
+    user_id: str,
+) -> str:
+    """
+    Run the tool Gemini requested.
+    """
+
+    tool = TOOL_FUNCTIONS.get(tool_name)
+
+    if tool is None:
+        return f"Tool '{tool_name}' does not exist."
+
+    if tool_name == "get_my_recommendations":
+        result = await tool(
+            db=db,
+            user_id=user_id,
+        )
+
+    elif tool_name == "save_source":
+        result = await tool(
+            db=db,
+            **arguments,
+        )
+
+    else:
+        result = await tool(**arguments)
+
+    return json.dumps(result, default=str)
+
+
+def get_gemini_tools() -> list[types.Tool]:
+    """
+    Convert our existing tool schemas into Gemini's format.
+    """
+
+    functions = []
+
+    for schema in TOOL_SCHEMAS:
+        function = schema.get("function")
+
+        if not isinstance(function, dict):
+            continue
+
+        functions.append(
+            types.FunctionDeclaration(
+                name=function["name"],
+                description=function.get("description", ""),
+                parameters_json_schema=function.get(
+                    "parameters",
+                    {"type": "object"},
+                ),
+            )
+        )
+
+    return [
+        types.Tool(
+            function_declarations=functions,
+        )
+    ]
