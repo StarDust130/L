@@ -1,4 +1,5 @@
 import logging
+from copy import deepcopy
 from typing import Any
 
 from sqlalchemy import select
@@ -33,6 +34,28 @@ async def get_memory(
     return memory.memory
 
 
+def merge_memory(
+    old: dict[str, Any],
+    new: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Deep-merge new memory into existing memory.
+
+    Nested dictionaries are merged instead of replaced.
+    """
+
+    result = deepcopy(old)
+
+    for key, value in new.items():
+        if isinstance(result.get(key), dict) and isinstance(value, dict):
+            result[key] = merge_memory(
+                result[key],
+                value,
+            )
+        else:
+            result[key] = deepcopy(value)
+
+    return result
 
 
 async def save_memory(
@@ -41,12 +64,6 @@ async def save_memory(
     memory_data: dict[str, Any],
 ) -> dict[str, Any]:
     """Create or update the user's long-term memory."""
-
-    logger.info(
-        "🧠 save_memory started | user=%s | data=%s",
-        user_id,
-        memory_data,
-    )
 
     result = await db.execute(
         select(UserMemory).where(
@@ -57,32 +74,43 @@ async def save_memory(
     memory = result.scalar_one_or_none()
 
     if memory is None:
-        logger.info("🆕 Creating new memory row")
-
         memory = UserMemory(
             clerk_user_id=user_id,
-            memory=memory_data,
+            memory=deepcopy(memory_data),
         )
 
         db.add(memory)
 
     else:
-        logger.info(
-            "♻️ Updating existing memory row | id=%s",
-            memory.id,
+        current_memory = merge_memory(
+            memory.memory or {},
+            memory_data,
         )
 
-        current_memory = memory.memory or {}
-        current_memory.update(memory_data)
         memory.memory = current_memory
 
     await db.commit()
     await db.refresh(memory)
 
-    logger.info(
-        "✅ Memory saved successfully | id=%s | memory=%s",
-        memory.id,
-        memory.memory,
+    return memory.memory
+
+
+def should_save_memory(message: str) -> bool:
+    text = message.lower().strip()
+
+    triggers = (
+        "remember",
+        "save this",
+        "keep this in mind",
+        "i prefer",
+        "i like",
+        "i don't like",
+        "i hate",
+        "from now on",
+        "save in my memory",
+        "store this in my memory",
+        "remember this for me",
+        "remember this",
     )
 
-    return memory.memory
+    return text.startswith(triggers)
