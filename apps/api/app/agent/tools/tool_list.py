@@ -5,7 +5,6 @@ from groq.types.chat import ChatCompletionToolParam
 
 from app.agent.tools.jobs import get_my_recommendations
 from app.agent.tools.sources import get_known_sources, save_source
-from app.agent.tools.web import fetch_page, search_web
 
 # 🤖 Tools exposed to the LLM.
 TOOL_SCHEMAS: list[ChatCompletionToolParam] = [
@@ -22,45 +21,6 @@ TOOL_SCHEMAS: list[ChatCompletionToolParam] = [
                 "type": "object",
                 "properties": {},
                 "required": [],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "search_web",
-            "description": (
-                "Search the internet for useful websites, companies, or job sources."
-            ),
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "The search query.",
-                    },
-                },
-                "required": ["query"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "fetch_page",
-            "description": (
-                "Fetch and inspect a webpage to determine "
-                "whether it is a useful job or company source."
-            ),
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "url": {
-                        "type": "string",
-                        "description": "The webpage URL to inspect.",
-                    },
-                },
-                "required": ["url"],
             },
         },
     },
@@ -130,8 +90,6 @@ TOOL_FUNCTIONS: dict[
     Callable[..., Awaitable[Any]],
 ] = {
     "get_my_recommendations": get_my_recommendations,
-    "search_web": search_web,
-    "fetch_page": fetch_page,
     "get_known_sources": get_known_sources,
     "save_source": save_source,
 }
