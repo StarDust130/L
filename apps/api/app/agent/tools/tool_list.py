@@ -3,6 +3,7 @@ from typing import Any
 
 from groq.types.chat import ChatCompletionToolParam
 
+from app.agent.memory.memory_service import save_memory
 from app.agent.tools.jobs import get_my_recommendations
 from app.agent.tools.sources import get_known_sources, save_source
 from app.agent.tools.web import fetch_page, search_web
@@ -30,17 +31,15 @@ TOOL_SCHEMAS: list[ChatCompletionToolParam] = [
         "function": {
             "name": "search_web",
             "description": (
-                "Search the web for NEW and CURRENT information. "
-                "Use this when you need to discover jobs, companies, "
-                "job boards, career pages, or other relevant sources. "
-                "The query must contain real search terms. "
-                "You may use search operators together with real terms. "
-                'Good example: "junior FastAPI remote jobs site:wellfound.com". '
-                'Bad example: "site:wellfound.com". '
-                "Do not use this when you already have the exact URL to inspect; "
-                "use fetch_page instead. "
-                "Do not repeat the same search unless the previous results "
-                "were insufficient."
+                "Search the web for NEW or CURRENT information only when the user "
+                "actually asks you to find, search, discover, check, look up, or verify "
+                "something external. "
+                "IMPORTANT: Do NOT use this tool when the user is merely telling you "
+                "a preference, opinion, goal, or fact about themselves. "
+                "For example, 'I love remote startup jobs' is a memory statement, "
+                "not a search request. "
+                "Use search_web for requests like 'Find remote startup jobs'. "
+                "The query must contain real search terms."
             ),
             "parameters": {
                 "type": "object",
@@ -149,6 +148,64 @@ TOOL_SCHEMAS: list[ChatCompletionToolParam] = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "save_memory",
+            "description": (
+                "Save useful long-term career information about the user. "
+                "Use this when the user naturally expresses a stable preference, "
+                "goal, like, dislike, or career fact that could improve future "
+                "job matching. The user does NOT need to say 'remember'. "
+                "IMPORTANT: A preference statement should normally use this tool "
+                "and should NOT trigger web search. "
+                "Do not save casual conversation, jokes, temporary requests, "
+                "or unrelated personal information. "
+                "Examples: "
+                '"I prefer remote jobs"; '
+                '"I like startups with fewer than 10 people"; '
+                '"I love FastAPI"; '
+                '"I don\'t want fintech jobs"; '
+                '"I like companies similar to Stripe".'
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "category": {
+                        "type": "string",
+                        "enum": [
+                            "job_preferences",
+                            "company_preferences",
+                            "technology_preferences",
+                            "location_preferences",
+                            "role_preferences",
+                            "likes",
+                            "dislikes",
+                            "career_goals",
+                            "career_facts",
+                        ],
+                    },
+                    "key": {
+                        "type": "string",
+                        "description": (
+                            "The specific thing to remember. "
+                            "Examples: work_mode, company_size, preferred_stack, "
+                            "preferred_company, disliked_industry."
+                        ),
+                    },
+                    "value": {
+                        "type": "string",
+                        "description": (
+                            "The user's actual preference or fact. "
+                            "Example: 'remote worldwide' or 'under 10 employees'."
+                        ),
+                    },
+                },
+                "required": ["category", "key", "value"],
+            },
+        },
+    },
+
 ]
 
 
@@ -161,4 +218,5 @@ TOOL_FUNCTIONS: dict[
     "fetch_page": fetch_page,
     "get_known_sources": get_known_sources,
     "save_source": save_source,
+    "save_memory": save_memory,
 }
