@@ -49,8 +49,6 @@ async def update_typing(
     chat_id: str,
     message_id: int,
 ) -> None:
-    """🔄 Change the AI thinking message."""
-
     text = random.choice(THINKING_MESSAGES)
 
     url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/editMessageText"
@@ -62,10 +60,10 @@ async def update_typing(
     }
 
     async with httpx.AsyncClient() as client:
-        response = await client.post(
-            url,
-            json=payload,
-        )
+        response = await client.post(url, json=payload)
+
+        if response.status_code == 400:
+            return
 
         response.raise_for_status()
 
