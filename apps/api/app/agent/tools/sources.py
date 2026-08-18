@@ -19,12 +19,15 @@ class SourceResult(TypedDict):
 async def get_known_sources(
     db: AsyncSession,
 ) -> list[SourceResult]:
-    """Return the sources L already knows about."""
+    """Return the best known job/company sources."""
 
     result = await db.execute(
-        select(Source).order_by(
+        select(Source)
+        .order_by(
             Source.quality_score.desc(),
+            Source.last_checked.asc(),
         )
+        .limit(20)
     )
 
     sources = result.scalars().all()
