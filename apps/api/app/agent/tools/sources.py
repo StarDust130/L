@@ -51,17 +51,13 @@ async def save_source(
     source_type: str,
     description: str | None = None,
 ) -> SourceResult:
-    """
-    💾 Save a useful discovery source.
-
-    We check the URL first so L cannot create duplicate sources.
-    """
+    """Save a useful new discovery source."""
 
     result = await db.execute(select(Source).where(Source.url == url))
 
     existing = result.scalar_one_or_none()
 
-    # ♻️ Source already exists.
+    # ♻️ Already known.
     if existing:
         return {
             "id": existing.id,
