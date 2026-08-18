@@ -10,7 +10,7 @@ settings = get_settings()
 
 
 class WebSearchResult(TypedDict):
-    """🌐 Clean web-search result returned to L."""
+    """Clean web-search result returned to L."""
 
     title: str
     url: str
@@ -20,8 +20,33 @@ class WebSearchResult(TypedDict):
 
 async def search_web(
     query: str,
-) -> list[WebSearchResult]:
-    """🔎 Search the web for current information."""
+) -> list[WebSearchResult] | dict[str, str]:
+    """Search the web for current information."""
+
+    query = query.strip()
+
+    # Prevent invalid Tavily queries such as:
+    # "site:wellfound.com"
+    if not query:
+        return {
+            "error": "Search query cannot be empty.",
+        }
+
+    # Query must contain real search words.
+    words = [
+        word
+        for word in query.split()
+        if not word.startswith(("site:", "intitle:", "inurl:"))
+    ]
+
+    if not words:
+        return {
+            "error": (
+                "Invalid search query. "
+                "Use real search terms, not only search operators. "
+                'Example: "junior FastAPI remote jobs site:wellfound.com"'
+            ),
+        }
 
     client = TavilyClient(
         api_key=settings.tavily_api_key,
@@ -50,11 +75,8 @@ async def search_web(
     return results
 
 
-# Fetch and clean a webpage 🕸️🌐🧹
 async def fetch_page(url: str) -> str:
-    """
-    🌐 Fetch and clean a real webpage.
-    """
+    """Fetch and clean a webpage."""
 
     try:
         async with httpx.AsyncClient(
@@ -67,18 +89,27 @@ async def fetch_page(url: str) -> str:
             response = await client.get(url)
             response.raise_for_status()
 
-            soup = BeautifulSoup(response.text, "html.parser")
+            soup = BeautifulSoup(
+                response.text,
+                "html.parser",
+            )
 
-            # 🧹 Remove elements that are almost always noise.
-            for element in soup(["script", "style", "noscript"]):
+            # Remove obvious page noise.
+            for element in soup(["script", "style", "noscript", "svg"]):
                 element.decompose()
 
-            # 🎯 Prefer the page's main content.
+            # Prefer main content.
             main = soup.find("main") or soup.body
 
-            text = main.get_text(separator=" ", strip=True) if main else ""
+            if not main:
+                return "PAGE_FETCH_FAILED: No readable page content found."
 
-            # 🛡️ Prevent gigantic pages from entering the LLM.
+            text = main.get_text(
+                separator=" ",
+                strip=True,
+            )
+
+            # Prevent huge pages from entering Gemini.
             return text[:8_000]
 
     except httpx.HTTPError as exc:
