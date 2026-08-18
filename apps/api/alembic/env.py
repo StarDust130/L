@@ -29,6 +29,7 @@ from app.company.target_company_model import TargetCompany  # noqa: F401
 from app.job.job_model import Job  # noqa: F401
 from app.job.recommendation_model import Recommendation  # noqa: F401
 from app.job.seen_job_model import SeenJob  # noqa: F401
+from apps.api.app.agent.memory.memory_model import UserMemory  # noqa: F401
 from app.profile.profile_model import CandidateProfileRecord  # noqa: F401
 from app.source.source_model import Source  # noqa: F401
 from app.telegram.telegram_account_model import TelegramAccount  # noqa: F401

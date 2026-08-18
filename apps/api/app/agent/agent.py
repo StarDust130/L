@@ -5,6 +5,7 @@ from google.genai import types
 from google.genai.errors import APIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.agent.memory.context import build_user_context
 from app.agent.prompt.v1_prompt import SYSTEM_PROMPT
 from app.agent.tools.tool_list import TOOL_FUNCTIONS, TOOL_SCHEMAS
 from app.agent.types import AgentResult
@@ -14,7 +15,7 @@ from app.llm.client import gemini_client
 settings = get_settings()
 
 
-MAX_ITERATIONS = 10
+MAX_ITERATIONS = 7
 
 
 # ! MAIN AGENT LOOP 🔞
@@ -39,11 +40,24 @@ async def run_agent(
     Repeat
     """
 
+    user_context = await build_user_context(
+        db=db,
+        user_id=user_id,
+    )
+
     contents: list[types.Content] = [
         types.Content(
             role="user",
             parts=[
-                types.Part.from_text(text=message),
+                types.Part.from_text(
+                    text=f"""
+    USER CONTEXT:
+    {json.dumps(user_context, default=str)}
+
+    USER MESSAGE:
+    {message}
+    """,
+                ),
             ],
         )
     ]
