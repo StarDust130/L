@@ -5,12 +5,13 @@ from sqlalchemy.ext.asyncio import AsyncSession  # 🔄 Async DB session
 from app.agent.agent import run_agent  # 👤 Profile model
 from app.agent.tools.jobs import get_my_recommendations
 from app.agent.tools.web import search_web
-from app.agent.workers.source_discovery import discover_sources
-from app.agent.workers.source_monitor import monitor_sources
+from app.core.auth import require_user
 from app.db.db import get_db  # 🗄️ Database dependency
 from app.job.job_service import collect_and_save_jobs  # 📥 Collect jobs
 from app.job.matching.matching_service import match_jobs_for_user  # 🧠 Match jobs
 from app.profile.profile_model import CandidateProfileRecord
+from workers.source_discovery import discover_sources
+from workers.source_monitor import monitor_sources
 
 # 💼 Job API routes
 router = APIRouter(prefix="/jobs", tags=["Jobs"])
@@ -32,9 +33,14 @@ async def collect_jobs(db: AsyncSession = Depends(get_db)):
 @router.post("/match")
 async def match_jobs(
     db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(require_user),
 ):
     # 👤 Find a candidate profile
-    result = await db.execute(select(CandidateProfileRecord).limit(1))
+    result = await db.execute(
+        select(CandidateProfileRecord).where(
+            CandidateProfileRecord.clerk_user_id == user_id,
+        )
+    )
 
     # 📦 Get the profile
     profile = result.scalar_one_or_none()
@@ -78,10 +84,11 @@ async def test_agent(
 @router.get("/agent/test-recommendations")
 async def test_recommendations(
     db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(require_user),
 ):
     jobs = await get_my_recommendations(
         db=db,
-        user_id="user_3HmEkdg0OKTZkY6srwYUiK4s2YN",
+        user_id=user_id,
     )
 
     return {
@@ -122,8 +129,8 @@ async def test_source_discovery(
 async def test_source_monitor(
     db: AsyncSession = Depends(get_db),
 ):
-    result = await monitor_sources(
-        db=db,
-    )
+    result = await monitor_sources(db=db, user_id="user_3HmEkdg0OKTZkY6srwYUiK4s2YN")
+
+    result["recommendations_created"] = 0
 
     return result

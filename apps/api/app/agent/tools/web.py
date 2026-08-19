@@ -1,7 +1,23 @@
+from typing import TypedDict
 from urllib.parse import urljoin
 
 import httpx
 from bs4 import BeautifulSoup, Tag
+from tavily import TavilyClient
+
+from app.core.config import get_settings
+
+settings = get_settings()
+
+
+class WebSearchResult(TypedDict):
+    """Clean web-search result returned to L."""
+
+    title: str
+    url: str
+    content: str
+    score: float
+
 
 _NOISE_TAGS = (
     "script",
@@ -278,3 +294,60 @@ async def fetch_page(url: str) -> str:
 
     except Exception as exc:
         return f"PAGE_FETCH_FAILED: Unexpected error: {exc}"
+
+
+async def search_web(
+    query: str,
+) -> list[WebSearchResult] | dict[str, str]:
+    """Search the web for current information."""
+
+    query = query.strip()
+
+    # Prevent invalid Tavily queries such as:
+    # "site:wellfound.com"
+    if not query:
+        return {
+            "error": "Search query cannot be empty.",
+        }
+
+    # Query must contain real search words.
+    words = [
+        word
+        for word in query.split()
+        if not word.startswith(("site:", "intitle:", "inurl:"))
+    ]
+
+    if not words:
+        return {
+            "error": (
+                "Invalid search query. "
+                "Use real search terms, not only search operators. "
+                'Example: "junior FastAPI remote jobs site:wellfound.com"'
+            ),
+        }
+
+    client = TavilyClient(
+        api_key=settings.tavily_api_key,
+    )
+
+    response = client.search(
+        query=query,
+        search_depth="basic",
+        max_results=5,
+        include_answer=False,
+        include_raw_content=False,
+    )
+
+    results: list[WebSearchResult] = []
+
+    for item in response.get("results", []):
+        results.append(
+            {
+                "title": str(item.get("title", "")),
+                "url": str(item.get("url", "")),
+                "content": str(item.get("content", ""))[:1200],
+                "score": float(item.get("score", 0)),
+            }
+        )
+
+    return results

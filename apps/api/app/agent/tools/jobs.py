@@ -1,5 +1,5 @@
-from typing import Any, TypedDict
-from urllib.parse import urljoin
+from typing import TypedDict
+from urllib.parse import urljoin, urlparse
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,15 +12,20 @@ from app.job.recommendation_model import Recommendation
 class DiscoveredJob(TypedDict):
     """💼 Raw job data extracted from a source."""
 
-    title: str
-    company: str
+    title: str | None
+    company: str | None
     location: str | None
     salary: str | None
     description: str | None
     apply_url: str | None
+    company_website: str | None
+    detail_url: str | None
 
 
-def normalize_discovered_job(raw_job: Any, source_url: str) -> DiscoveredJob | None:
+def normalize_discovered_job(
+    raw_job: object,
+    source_url: str,
+) -> DiscoveredJob | None:
     """Convert one extractor result into the discovered-job contract."""
     if not isinstance(raw_job, dict):
         return None
@@ -28,7 +33,7 @@ def normalize_discovered_job(raw_job: Any, source_url: str) -> DiscoveredJob | N
     title = raw_job.get("title")
     company = raw_job.get("company")
 
-    def optional_text(value: Any) -> str | None:
+    def optional_text(value: object) -> str | None:
         if not isinstance(value, str):
             return None
         value = value.strip()
@@ -36,7 +41,43 @@ def normalize_discovered_job(raw_job: Any, source_url: str) -> DiscoveredJob | N
 
     apply_url = optional_text(raw_job.get("apply_url"))
     if apply_url:
-        apply_url = urljoin(source_url, apply_url)
+        parsed_apply_url = urlparse(apply_url)
+        if parsed_apply_url.scheme in {
+            "",
+            "http",
+            "https",
+        } and not apply_url.startswith("#"):
+            apply_url = urljoin(source_url, apply_url)
+
+    detail_url = optional_text(raw_job.get("detail_url"))
+    if detail_url:
+        parsed_detail_url = urlparse(detail_url)
+        if parsed_detail_url.scheme in {
+            "",
+            "http",
+            "https",
+        } and not detail_url.startswith("#"):
+            detail_url = urljoin(source_url, detail_url)
+        else:
+            detail_url = None
+
+    company_website = optional_text(raw_job.get("company_website"))
+    if company_website:
+        parsed_company_website = urlparse(company_website)
+        if parsed_company_website.scheme in {
+            "",
+            "http",
+            "https",
+        } and not company_website.startswith("#"):
+            company_website = urljoin(source_url, company_website)
+            resolved_company_website = urlparse(company_website)
+            if (
+                resolved_company_website.scheme not in {"http", "https"}
+                or not resolved_company_website.netloc
+            ):
+                company_website = None
+        else:
+            company_website = None
 
     return {
         "title": title.strip() if isinstance(title, str) else "",
@@ -45,6 +86,8 @@ def normalize_discovered_job(raw_job: Any, source_url: str) -> DiscoveredJob | N
         "salary": optional_text(raw_job.get("salary")),
         "description": optional_text(raw_job.get("description")),
         "apply_url": apply_url,
+        "company_website": company_website,
+        "detail_url": detail_url,
     }
 
 
@@ -56,7 +99,7 @@ class JobRecommendation(TypedDict):
     company: str
     location: str | None
     salary: str | None
-    apply_url: str
+    apply_url: str | None
     match_score: float
 
 

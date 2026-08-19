@@ -4,7 +4,7 @@ import logging
 from app.core.config import get_settings
 from app.job.job_model import Job
 from app.job.matching.matching_schema import AICompatibilityResult
-from app.llm.client import client
+from app.llm.client import groq_client
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +61,7 @@ Description: {job.description or "No description"}
         job.id,
     )
 
-    response = await client.chat.completions.create(
+    response = await groq_client.chat.completions.create(
         model=settings.groq_model,
         messages=[
             {

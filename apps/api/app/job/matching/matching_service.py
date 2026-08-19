@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 
 from sqlalchemy import select
@@ -7,6 +8,8 @@ from app.job.job_model import Job
 from app.job.matching.ai_matching_service import calculate_compatibility_score
 from app.job.recommendation_model import Recommendation
 from app.profile.profile_model import CandidateProfileRecord
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -22,16 +25,29 @@ def rule_based_filter(
     profile: CandidateProfileRecord,
     job: Job,
 ) -> RuleFilterResult:
-    """🧹 Remove only obviously unusable jobs before AI scoring."""
+    """🧹 Keep jobs that could plausibly match this candidate and only reject obvious junk."""
 
-    candidate = profile.profile
+    candidate = profile.profile or {}
 
-    skills = candidate.get("skills", [])
+    skills = [
+        str(skill).strip()
+        for skill in candidate.get("skills", [])
+        if str(skill).strip()
+    ]
+    target_roles = [
+        str(role).strip().lower()
+        for role in candidate.get("target_roles", [])
+        if str(role).strip()
+    ]
+    preferences = [
+        str(pref).strip().lower()
+        for pref in candidate.get("preferences", [])
+        if str(pref).strip()
+    ]
 
     reasons: list[str] = []
     matched_skills: list[str] = []
 
-    # ❌ No title = unusable job.
     if not job.title:
         return RuleFilterResult(
             passed=False,
@@ -39,19 +55,11 @@ def rule_based_filter(
             matched_skills=[],
         )
 
-    # ❌ No way to apply = unusable job.
-    if not job.apply_url:
-        return RuleFilterResult(
-            passed=False,
-            reasons=["missing_apply_url"],
-            matched_skills=[],
-        )
-
-    # 🧠 Search title + description for candidate skills.
     job_text = " ".join(
         [
-            job.title,
+            job.title or "",
             job.description or "",
+            job.location or "",
         ]
     ).lower()
 
@@ -59,13 +67,21 @@ def rule_based_filter(
         if skill.lower() in job_text:
             matched_skills.append(skill)
 
+    target_role_match = any(role in job_text for role in target_roles)
+    preference_match = any(pref in job_text for pref in preferences)
+
     if matched_skills:
         reasons.append("skill_match")
+    if target_role_match:
+        reasons.append("target_role_match")
+    if preference_match:
+        reasons.append("preference_match")
+
+    if not matched_skills and not target_role_match and not preference_match:
+        reasons.append("no_user_signal")
 
     reasons.append("usable_job_data")
 
-    # ✅ Don't reject because of role/location.
-    # AI will decide whether the job is actually a good match.
     return RuleFilterResult(
         passed=True,
         reasons=reasons,
@@ -131,14 +147,18 @@ async def match_jobs_for_user(
             continue
 
         # 🤖 AI decides whether this job is actually relevant.
-        ai_result = await calculate_compatibility_score(
-            profile.profile,
-            job,
-        )
+        try:
+            ai_result = await calculate_compatibility_score(
+                profile.profile,
+                job,
+            )
+        except Exception:
+            logger.exception("job_matching_failed job_id=%s", job.id)
+            continue
 
         # ❌ Weak match → keep the job in `jobs`,
         # but don't create a recommendation.
-        if ai_result.score < 10: # TODO: -> MAKE IT 60% in production
+        if ai_result.score < 20:
             continue
 
         # 💾 Strong match → create user-specific recommendation.

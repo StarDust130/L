@@ -13,6 +13,7 @@ class CandidateProfile(BaseModel):
     experience: list[str]
     education: list[str]
     locations: list[str]
+    preferences: list[str] = Field(default_factory=list)
 
     remote_preference: Literal[
         "remote",
