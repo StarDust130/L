@@ -422,6 +422,10 @@ async def monitor_sources(
             source.quality_score,
         )
 
+        source_jobs_found = 0
+        source_hard_rejected = 0
+        source_strong_matches = 0
+
         try:
             # -------------------------------------------------
             # 1. Fetch source page.
@@ -454,6 +458,7 @@ async def monitor_sources(
             )
 
             jobs_found += len(raw_jobs)
+            source_jobs_found = len(raw_jobs)
 
             logger.info(
                 "📋 jobs_extracted | source=%s | count=%s",
@@ -484,6 +489,7 @@ async def monitor_sources(
 
                     if not quality_result.passed:
                         hard_rejected += 1
+                        source_hard_rejected += 1
 
                         logger.info(
                             "🚫 hard_filter_rejected | "
@@ -704,6 +710,7 @@ async def monitor_sources(
 
                     if recommendation_created:
                         recommendations_created += 1
+                        source_strong_matches += 1
 
                         logger.info(
                             "⭐ recommendation_created | job_id=%s | score=%.2f",
@@ -720,13 +727,35 @@ async def monitor_sources(
                             score,
                         )
 
-            # -------------------------------------------------
-            # 10. Source completed.
-            # -------------------------------------------------
+                # -------------------------------------------------
+                # 10. Update source quality.
+                # -------------------------------------------------
 
-            source.last_checked = datetime.now(UTC)
-            source.failure_count = 0
-            sources_checked += 1
+                source.quality_score = calculate_source_quality(
+                    jobs_found=source_jobs_found,
+                    hard_rejected=source_hard_rejected,
+                    strong_matches=source_strong_matches,
+                    failures=0,
+                )
+
+                logger.info(
+                    "📊 source_quality_updated | "
+                    "source=%s | quality=%.2f | jobs=%d | "
+                    "rejected=%d | matches=%d",
+                    source.name,
+                    source.quality_score,
+                    source_jobs_found,
+                    source_hard_rejected,
+                    source_strong_matches,
+                )
+
+                # -------------------------------------------------
+                # 11. Source completed.
+                # -------------------------------------------------
+
+                source.last_checked = datetime.now(UTC)
+                source.failure_count = 0
+                sources_checked += 1
 
             logger.info(
                 "✅ source_check_completed | source=%s | jobs=%s",
@@ -737,10 +766,23 @@ async def monitor_sources(
         except Exception:
             sources_failed += 1
             source.failure_count += 1
+            
+
+            source.quality_score = calculate_source_quality(
+                jobs_found=source_jobs_found,
+                hard_rejected=source_hard_rejected,
+                strong_matches=source_strong_matches,
+                failures=source.failure_count,
+            )
+
+            # Prevent a broken source from being retried immediately.
+            source.last_checked = datetime.now(UTC)
 
             logger.exception(
-                "❌ source_check_failed | source=%s",
+                "❌ source_check_failed | source=%s | failures=%s | quality=%.2f",
                 source.name,
+                source.failure_count,
+                source.quality_score,
             )
 
     # ---------------------------------------------------------
@@ -768,3 +810,40 @@ async def monitor_sources(
     )
 
     return result_data
+
+
+def calculate_source_quality(
+    *,
+    jobs_found: int,
+    hard_rejected: int,
+    strong_matches: int,
+    failures: int,
+) -> float:
+    if failures > 0 and jobs_found == 0:
+        return 0.0
+
+    score = 5.0
+
+    if jobs_found >= 10:
+        score += 1.0
+    elif jobs_found >= 5:
+        score += 0.5
+
+    match_rate = strong_matches / jobs_found if jobs_found else 0.0
+
+    if match_rate >= 0.60:
+        score += 2.0
+    elif match_rate >= 0.40:
+        score += 1.0
+    elif match_rate < 0.15:
+        score -= 1.5
+
+    rejection_rate = hard_rejected / jobs_found if jobs_found else 0.0
+
+    if rejection_rate > 0.70:
+        score -= 1.5
+
+    if failures >= 3:
+        score -= 2.0
+
+    return max(0.0, min(10.0, score))
