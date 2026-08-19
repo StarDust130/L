@@ -10,7 +10,6 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.agent.memory.memory_model import UserMemory
 from app.agent.tools.extract import extract_jobs_from_page
 from app.agent.tools.job_persistence import make_job_fingerprint, save_discovered_job
 from app.agent.tools.job_validation import (
@@ -148,14 +147,6 @@ async def evaluate_jobs_with_gemini(
     prompt = f"""
 You are L's final job evaluation engine.
 
-You receive:
-1. Candidate profile
-2. Candidate long-term memory
-3. Job listings
-4. Individual job-page content when available
-
-Your job is to COMPLETE and SCORE every job.
-
 CANDIDATE PROFILE:
 {json.dumps(profile, default=str)}
 
@@ -165,49 +156,39 @@ CANDIDATE MEMORY:
 JOBS:
 {json.dumps(payload, default=str)}
 
-RULES FOR JOB DATA:
+JOB DATA RULES:
 
 - Use the individual detail page when available.
-- Prefer detail-page information over listing-page information.
-- Fill missing company, location, description, salary, apply_url,
-  company_website, and detail_url when clearly present.
+- Fill missing fields from the detail page.
 - Never invent information.
-- If information is unavailable, leave it empty.
-- The direct Apply URL is preferred.
-- Do not use a generic homepage as apply_url.
-- Preserve real URLs exactly when available.
+- If [DIRECT_APPLY_URL] exists, use it as apply_url.
+- Do NOT replace a direct Apply URL with the company homepage.
+- Do NOT invent an apply URL.
+- Keep detail_url as the job posting URL.
+- Preserve real URLs exactly.
+- A job should have either a direct apply_url or a valid detail_url.
 
-RULES FOR MATCHING:
+MATCHING RULES:
 
-- Compare the job with the candidate's actual skills,
-  experience, projects, technologies, and career direction.
-- Use long-term memory for preferences.
-- Do NOT require an exact title match.
-- Full-stack experience can match backend/software/AI roles.
-- Python/backend/API experience can transfer to AI/ML/software roles.
-- Missing one requirement does not automatically make the job bad.
-- Respect explicit hard requirements.
-- Normal preferences are strong signals, not absolute restrictions.
-- Prefer technical engineering opportunities.
-- Clearly unrelated roles should receive a very low score.
-- Do not invent candidate experience.
-- Do not invent job requirements.
+- Match against the candidate's real skills and experience.
+- Respect remote/location/company/technology preferences.
+- Do not require exact title matching.
+- Full-stack can match backend/software/AI roles.
+- Backend/Python/API experience can transfer to AI/ML/software roles.
+- Missing one requirement does not automatically reject a job.
+- Clearly unrelated jobs should score very low.
+- Return a realistic score.
 
 SCORING:
+0.90-1.00 exceptional
+0.80-0.89 excellent
+0.70-0.79 strong
+0.60-0.69 good
+0.50-0.59 possible
+0.00-0.49 weak/poor
 
-0.90 - 1.00 = exceptional
-0.80 - 0.89 = excellent
-0.70 - 0.79 = strong
-0.60 - 0.69 = good
-0.50 - 0.59 = possible
-0.40 - 0.49 = weak but relevant
-0.00 - 0.39 = poor
-
-The score is for ranking opportunities.
-
-Return one result for every input job.
-
-Return ONLY structured JSON.
+Return one result for every job.
+Return ONLY valid JSON.
 """
 
     try:
@@ -246,9 +227,9 @@ async def _load_user_context(
     db: AsyncSession,
     user_id: str,
 ) -> tuple[dict, dict]:
-    """
-    Load candidate profile + long-term memory.
-    """
+    """Load candidate profile and long-term memory."""
+
+    from app.agent.memory.memory_model import UserMemory
 
     profile_result = await db.execute(
         select(CandidateProfileRecord).where(
@@ -313,10 +294,8 @@ async def _save_recommendation(
 
         return True, False
 
-    # Update score if Gemini has a newer evaluation.
     if float(recommendation.match_score) != score:
         recommendation.match_score = score
-
         return False, True
 
     return False, False
@@ -327,27 +306,31 @@ async def monitor_sources(
     user_id: str,
 ) -> dict[str, int]:
     """
-    Monitor known sources and build user-specific recommendations.
+    Monitor scheduled sources and create user-specific recommendations.
 
-    Pipeline:
+    Flow:
 
-        Source
+        source
+          ↓
+        scheduler
           ↓
         fetch source page
           ↓
-        Gemini: extract jobs
+        Gemini #1 → extract jobs
           ↓
         cheap Python filter
           ↓
         fetch detail pages with HTTP
           ↓
-        Gemini: enrich + match + score
+        Gemini #2 → enrich + match + score
           ↓
         validate
           ↓
         save/update Job
           ↓
         create/update Recommendation
+          ↓
+        update source quality
     """
 
     logger.info(
@@ -379,10 +362,6 @@ async def monitor_sources(
             "recommendations_updated": 0,
         }
 
-    # ---------------------------------------------------------
-    # Load sources.
-    # ---------------------------------------------------------
-
     result = await db.execute(
         select(Source).order_by(
             Source.quality_score.desc(),
@@ -411,24 +390,21 @@ async def monitor_sources(
     recommendations_created = 0
     recommendations_updated = 0
 
-    # ---------------------------------------------------------
-    # Process each source.
-    # ---------------------------------------------------------
-
     for source in sources_to_check:
         logger.info(
             "🔄 source_check_started | source=%s | quality=%.1f",
             source.name,
-            source.quality_score,
+            float(source.quality_score or 0),
         )
 
+        # Per-source metrics.
         source_jobs_found = 0
         source_hard_rejected = 0
         source_strong_matches = 0
 
         try:
             # -------------------------------------------------
-            # 1. Fetch source page.
+            # 1. Fetch source page
             # -------------------------------------------------
 
             page_text = await fetch_page(
@@ -436,20 +412,31 @@ async def monitor_sources(
             )
 
             if page_text.startswith("PAGE_FETCH_FAILED:"):
-                source.failure_count += 1
                 sources_failed += 1
+                source.failure_count += 1
+
+                # Important:
+                # prevent immediate retry of a broken source.
+                source.last_checked = datetime.now(UTC)
+
+                source.quality_score = calculate_source_quality(
+                    jobs_found=source_jobs_found,
+                    hard_rejected=source_hard_rejected,
+                    strong_matches=source_strong_matches,
+                    failures=source.failure_count,
+                )
 
                 logger.warning(
-                    "⚠️ source_fetch_failed | source=%s | failures=%s",
+                    "⚠️ source_fetch_failed | source=%s | failures=%s | quality=%.2f",
                     source.name,
                     source.failure_count,
+                    float(source.quality_score),
                 )
 
                 continue
 
             # -------------------------------------------------
-            # 2. Gemini #1:
-            #    Extract jobs from the source.
+            # 2. Gemini #1 → Extract jobs
             # -------------------------------------------------
 
             raw_jobs = await extract_jobs_from_page(
@@ -457,17 +444,17 @@ async def monitor_sources(
                 source_url=source.url,
             )
 
-            jobs_found += len(raw_jobs)
             source_jobs_found = len(raw_jobs)
+            jobs_found += source_jobs_found
 
             logger.info(
                 "📋 jobs_extracted | source=%s | count=%s",
                 source.name,
-                len(raw_jobs),
+                source_jobs_found,
             )
 
             # -------------------------------------------------
-            # 3. Normalize + cheap Python filter.
+            # 3. Normalize + cheap Python filter
             # -------------------------------------------------
 
             candidate_jobs: list[DiscoveredJob] = []
@@ -511,24 +498,46 @@ async def monitor_sources(
                         source.name,
                     )
 
+            # -------------------------------------------------
+            # No candidates
+            # -------------------------------------------------
+
             if not candidate_jobs:
+                source.quality_score = calculate_source_quality(
+                    jobs_found=source_jobs_found,
+                    hard_rejected=source_hard_rejected,
+                    strong_matches=source_strong_matches,
+                    failures=0,
+                )
+
                 source.last_checked = datetime.now(UTC)
                 source.failure_count = 0
+
                 sources_checked += 1
 
                 logger.info(
-                    "✅ source_check_completed | source=%s | jobs=0",
+                    "📊 source_quality_updated | "
+                    "source=%s | quality=%.2f | jobs=%d | "
+                    "rejected=%d | matches=%d",
                     source.name,
+                    float(source.quality_score),
+                    source_jobs_found,
+                    source_hard_rejected,
+                    source_strong_matches,
+                )
+
+                logger.info(
+                    "✅ source_check_completed | source=%s | jobs=%s",
+                    source.name,
+                    source_jobs_found,
                 )
 
                 continue
 
             # -------------------------------------------------
-            # 4. Fetch detail pages with normal HTTP.
+            # 4. Fetch detail pages using HTTP only
             #
-            # NO Gemini here.
-            #
-            # This gives Gemini richer information later.
+            # NO Gemini call here.
             # -------------------------------------------------
 
             detail_pages = await fetch_detail_pages(
@@ -542,14 +551,7 @@ async def monitor_sources(
             )
 
             # -------------------------------------------------
-            # 5. Gemini #2:
-            #
-            # ONE request:
-            #   - enrich missing fields
-            #   - inspect detail pages
-            #   - compare against profile
-            #   - use memory
-            #   - calculate match score
+            # 5. Gemini #2 → enrich + match + score
             # -------------------------------------------------
 
             for start in range(
@@ -559,11 +561,10 @@ async def monitor_sources(
             ):
                 batch = candidate_jobs[start : start + GEMINI_BATCH_SIZE]
 
-                # Detail pages are indexed relative to the
-                # original candidate list, so remap them.
+                # Remap detail-page indexes for this batch.
                 batch_detail_pages: dict[int, str] = {}
 
-                for batch_index, job in enumerate(batch):
+                for batch_index, _job in enumerate(batch):
                     global_index = start + batch_index
 
                     detail = detail_pages.get(
@@ -587,7 +588,7 @@ async def monitor_sources(
                 )
 
                 # -------------------------------------------------
-                # 6. Save jobs + recommendations.
+                # 6. Save/update jobs + recommendations
                 # -------------------------------------------------
 
                 for evaluated in evaluated_jobs:
@@ -623,6 +624,23 @@ async def monitor_sources(
                         invalid_jobs += 1
                         continue
 
+                    # Require at least the job page URL.
+                    # Direct apply_url is preferred but not mandatory.
+                    detail_url = (job.get("detail_url") or "").strip()
+
+                    apply_url = (job.get("apply_url") or "").strip()
+
+                    if not detail_url and not apply_url:
+                        invalid_jobs += 1
+
+                        logger.info(
+                            "🚫 job_no_usable_url | source=%s | title=%s",
+                            source.name,
+                            job.get("title"),
+                        )
+
+                        continue
+
                     validation_error = validate_job(
                         job,
                     )
@@ -640,7 +658,7 @@ async def monitor_sources(
                         continue
 
                     # -------------------------------------------------
-                    # 7. Save or update job.
+                    # 7. Save/update job
                     # -------------------------------------------------
 
                     changed = await save_discovered_job(
@@ -659,6 +677,7 @@ async def monitor_sources(
                             job.get("title"),
                             score,
                         )
+
                     else:
                         duplicate_jobs += 1
 
@@ -669,7 +688,7 @@ async def monitor_sources(
                         )
 
                     # -------------------------------------------------
-                    # 8. Find the saved job.
+                    # 8. Reload saved job
                     # -------------------------------------------------
 
                     fingerprint = make_job_fingerprint(
@@ -686,16 +705,14 @@ async def monitor_sources(
 
                     if saved_job is None:
                         logger.warning(
-                            "⚠️ saved job could not be reloaded | title=%s",
+                            "⚠️ saved_job_not_found | title=%s",
                             job.get("title"),
                         )
 
                         continue
 
                     # -------------------------------------------------
-                    # 9. Recommendation uses SAME Gemini score.
-                    #
-                    # NO SECOND Gemini call.
+                    # 9. Recommendation using SAME Gemini score
                     # -------------------------------------------------
 
                     (
@@ -721,52 +738,56 @@ async def monitor_sources(
                     elif recommendation_updated:
                         recommendations_updated += 1
 
+                        # Existing recommendation received
+                        # a refreshed score, still useful evidence
+                        # for source quality.
+                        source_strong_matches += 1
+
                         logger.info(
                             "🔄 recommendation_updated | job_id=%s | score=%.2f",
                             saved_job.id,
                             score,
                         )
 
-                # -------------------------------------------------
-                # 10. Update source quality.
-                # -------------------------------------------------
+            # -------------------------------------------------
+            # 10. Update source quality
+            # -------------------------------------------------
 
-                source.quality_score = calculate_source_quality(
-                    jobs_found=source_jobs_found,
-                    hard_rejected=source_hard_rejected,
-                    strong_matches=source_strong_matches,
-                    failures=0,
-                )
+            source.quality_score = calculate_source_quality(
+                jobs_found=source_jobs_found,
+                hard_rejected=source_hard_rejected,
+                strong_matches=source_strong_matches,
+                failures=0,
+            )
 
-                logger.info(
-                    "📊 source_quality_updated | "
-                    "source=%s | quality=%.2f | jobs=%d | "
-                    "rejected=%d | matches=%d",
-                    source.name,
-                    source.quality_score,
-                    source_jobs_found,
-                    source_hard_rejected,
-                    source_strong_matches,
-                )
+            source.last_checked = datetime.now(UTC)
+            source.failure_count = 0
 
-                # -------------------------------------------------
-                # 11. Source completed.
-                # -------------------------------------------------
+            sources_checked += 1
 
-                source.last_checked = datetime.now(UTC)
-                source.failure_count = 0
-                sources_checked += 1
+            logger.info(
+                "📊 source_quality_updated | "
+                "source=%s | quality=%.2f | jobs=%d | "
+                "rejected=%d | matches=%d",
+                source.name,
+                float(source.quality_score),
+                source_jobs_found,
+                source_hard_rejected,
+                source_strong_matches,
+            )
 
             logger.info(
                 "✅ source_check_completed | source=%s | jobs=%s",
                 source.name,
-                len(raw_jobs),
+                source_jobs_found,
             )
 
         except Exception:
             sources_failed += 1
             source.failure_count += 1
-            
+
+            # Broken sources shouldn't be retried immediately.
+            source.last_checked = datetime.now(UTC)
 
             source.quality_score = calculate_source_quality(
                 jobs_found=source_jobs_found,
@@ -775,18 +796,15 @@ async def monitor_sources(
                 failures=source.failure_count,
             )
 
-            # Prevent a broken source from being retried immediately.
-            source.last_checked = datetime.now(UTC)
-
             logger.exception(
                 "❌ source_check_failed | source=%s | failures=%s | quality=%.2f",
                 source.name,
                 source.failure_count,
-                source.quality_score,
+                float(source.quality_score),
             )
 
     # ---------------------------------------------------------
-    # Final commit.
+    # Final commit
     # ---------------------------------------------------------
 
     await db.commit()
