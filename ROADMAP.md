@@ -80,9 +80,9 @@ Understand the user's resume.
 
 ---
 
-<details open>
+<details>
 
-<summary><b>🚧🔎 Phase 3 — Job Collection</b></summary>
+<summary><b>✅🔎 Phase 3 — Job Collection</b></summary>
 
 ### Goal
 
@@ -92,14 +92,14 @@ Collect jobs automatically.
 
 Phase 3 — Intelligence Engine
 
-✅ Job storage
-✅ Company storage
-✅ Web research tools
-✅ Company discovery
-✅ Job discovery
-🚧 Normalization
-🚧 Deduplication
-🚧 Change detection
+- ✅ Job storage
+- ✅ Company storage
+- ✅ Web research tools
+- ✅ Company discovery
+- ✅ Job discovery
+- ✅ Normalization
+- ✅ Deduplication
+- ✅ Change detection
 
 </details>
 
