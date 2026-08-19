@@ -17,7 +17,7 @@ settings = get_settings()
 logger = logging.getLogger(__name__)
 
 
-MAX_ITERATIONS = 7
+MAX_ITERATIONS = 10
 
 
 # ! MAIN AGENT LOOP 🔞
@@ -229,27 +229,24 @@ async def execute_tool(
     db: AsyncSession,
     user_id: str,
 ) -> str:
-    """Run the tool Gemini requested."""
+    """
+    Execute an L tool with the correct backend context.
+    """
 
     tool = TOOL_FUNCTIONS.get(tool_name)
 
     if tool is None:
-        logger.error(
-            "❌ Unknown tool requested | name=%s",
-            tool_name,
-        )
-
         return f"Tool '{tool_name}' does not exist."
-
-    logger.info(
-        "▶️ Executing tool | name=%s",
-        tool_name,
-    )
 
     if tool_name == "get_my_recommendations":
         result = await tool(
             db=db,
             user_id=user_id,
+        )
+
+    elif tool_name == "get_known_sources":
+        result = await tool(
+            db=db,
         )
 
     elif tool_name == "save_source":
@@ -259,28 +256,23 @@ async def execute_tool(
         )
 
     elif tool_name == "save_memory":
-        logger.info(
-            "🧠 Saving memory | category=%s | key=%s | value=%s",
-            arguments.get("category"),
-            arguments.get("key"),
-            arguments.get("value"),
-        )
-
         result = await tool(
             db=db,
             user_id=user_id,
             memory_data={
                 arguments["category"]: {
                     arguments["key"]: arguments["value"],
-                },
+                }
             },
         )
 
     else:
         result = await tool(**arguments)
 
-    return json.dumps(result, default=str)
-
+    return json.dumps(
+        result,
+        default=str,
+    )
 
 def get_gemini_tools() -> list[types.Tool]:
     """Convert our existing tool schemas into Gemini's format."""
