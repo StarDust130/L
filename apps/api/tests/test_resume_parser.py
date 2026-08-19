@@ -1,8 +1,9 @@
 from io import BytesIO
 
 import pytest
-from apps.api.app.resume.routers.services.resume_parser import extract_resume_text
 from fastapi import UploadFile
+
+from app.resume.services.resume_parser import extract_resume_text
 
 
 @pytest.mark.anyio

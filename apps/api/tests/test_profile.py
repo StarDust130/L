@@ -1,7 +1,8 @@
-from apps.api.app.core.auth import require_user
-from app.main import app
-from apps.api.app.profile.schemas.profile import CandidateProfile
 from fastapi.testclient import TestClient
+
+from app.core.auth import require_user
+from app.main import app
+from app.profile.profile_schema import CandidateProfile
 
 
 def example_profile() -> dict:
