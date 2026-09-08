@@ -9,16 +9,19 @@ from sqlalchemy.orm import DeclarativeBase
 
 from app.core.config import get_settings
 
+
 settings = get_settings()
 
-# 💾 Connect SQLAlchemy to the database.
+
+# 💾 Async database engine
 engine = create_async_engine(
     settings.database_url,
     echo=False,
+    pool_pre_ping=True,
 )
 
 
-# 🧰 Create database session factory.
+# 🧰 Database session factory
 SessionLocal = async_sessionmaker(
     bind=engine,
     class_=AsyncSession,
@@ -26,18 +29,17 @@ SessionLocal = async_sessionmaker(
 )
 
 
-# 🏗️ Base class for all database models.
+# 🏗️ Base class for all SQLAlchemy models
 class Base(DeclarativeBase):
     pass
 
 
+# 🔌 Provide one database session per request/task
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    # 🔌 Give one database session to one request.
     async with SessionLocal() as session:
         yield session
 
 
-async def init_db() -> None:
-    # 🏗️ Create tables during local development.
-    async with engine.begin() as connection:
-        await connection.run_sync(Base.metadata.create_all)
+# 🛑 No create_all() here.
+#
+# Database schema is managed by Alembic migrations.
