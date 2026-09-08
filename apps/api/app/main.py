@@ -1,4 +1,3 @@
-from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import Depends, FastAPI
@@ -8,7 +7,7 @@ from app.company.company_router import router as company_router
 from app.core.auth import require_user
 from app.core.config import get_settings
 from app.core.logger import setup_logging
-from app.db.db import init_db
+
 from app.job.job_router import router as job_router
 from app.profile.profile_router import router as profile_router
 from app.resume.resume_router import router as resumes_router
@@ -18,18 +17,9 @@ from app.telegram.telegram_router import router as telegram_router
 settings = get_settings()
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # 🏗️ Prepare local database tables
-    await init_db()
-
-    yield
-
-
 # 🚀 FastAPI app
 app = FastAPI(
     title=settings.app_name,
-    lifespan=lifespan,
 )
 
 # 🌐 CORS
