@@ -1,43 +1,39 @@
 from logging.config import fileConfig
 
+from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from alembic import context
 from app.core.config import get_settings
 from app.db.db import Base
 
-# ⚙️ Get Alembic's configuration object.
-config = context.config
-
-# 🔧 Load application settings.
+# Load settings
 settings = get_settings()
 
-# 🗄️ Use the same database URL as FastAPI.
+# Alembic config
+config = context.config
+
+# Use the application's database URL
 config.set_main_option(
     "sqlalchemy.url",
     settings.database_url,
 )
 
-# 📝 Configure Alembic logging.
+# Alembic logging
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
+# Worker 2 models
+from workers.ingestion.models import (  # noqa: E402, F401
+    IngestionRun,
+    Job,
+    JobSource,
+)
 
-# 🧠 Import all models so Alembic can detect their tables.
-from app.company.company_model import Company  # noqa: F401
-from app.company.target_company_model import TargetCompany  # noqa: F401
-from apps.api.app.agent.memory.memory_model import UserMemory  # noqa: F401
-from app.profile.profile_model import CandidateProfileRecord  # noqa: F401
-from app.telegram.telegram_account_model import TelegramAccount  # noqa: F401
-
-# 📋 Tell Alembic about our SQLAlchemy tables.
+# SQLAlchemy metadata
 target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
-    """Run migrations without opening a database connection."""
-
-    # 🔗 Get the database URL.
     url = config.get_main_option("sqlalchemy.url")
 
     context.configure(
@@ -47,34 +43,27 @@ def run_migrations_offline() -> None:
         dialect_opts={"paramstyle": "named"},
     )
 
-    # 🚀 Run the migration.
     with context.begin_transaction():
         context.run_migrations()
 
 
 def run_migrations_online() -> None:
-    """Run migrations using a database connection."""
-
-    # 🔌 Create a database engine.
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
-    # 🔗 Connect to PostgreSQL.
     with connectable.connect() as connection:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
         )
 
-        # 🚀 Run the migration.
         with context.begin_transaction():
             context.run_migrations()
 
 
-# 🔀 Choose the migration mode.
 if context.is_offline_mode():
     run_migrations_offline()
 else:
