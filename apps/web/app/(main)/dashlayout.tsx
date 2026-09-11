@@ -38,13 +38,13 @@ const navigation = [
     href: "/profile",
     label: "Profile file",
     icon: FileSearch,
-    code: "02",
+    code: "03",
   },
   {
     href: "/settings",
     label: "Settings",
     icon: Settings2,
-    code: "03",
+    code: "04",
   },
 ];
 
@@ -105,12 +105,20 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
 
   return (
     <>
-      <div className="flex items-center mb-10 justify-between">
+      <div className="mb-10 flex items-center justify-between">
         <BrandMark inverted />
         <span className="rule-label text-white/45">v1.0</span>
       </div>
 
-
+      <div className="mb-8 border-y border-white/15 py-4">
+        <div className="flex items-center gap-2 text-[0.68rem] uppercase tracking-[0.16em] text-[#d8c9b2]">
+          <span className="size-1.5 rounded-full bg-[#b83b4d] shadow-[0_0_0_4px_rgba(184,59,77,0.14)]" />
+          Intelligence online
+        </div>
+        <p className="mt-2 text-xs leading-5 text-white/45">
+          Your private workspace is ready for a signal.
+        </p>
+      </div>
 
       <nav className="mt-6 space-y-1" aria-label="Main navigation">
         {navigation.map((item) => {
@@ -122,11 +130,10 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
               key={item.href}
               href={item.href}
               onClick={onNavigate}
-              className={`group flex items-center gap-3 border px-3 py-3 text-sm transition ${
-                isActive
+              className={`group flex items-center gap-3 border px-3 py-3 text-sm transition ${isActive
                   ? "border-[#d8c9b2] bg-[#f7f2e8] text-[#171310]"
                   : "border-transparent text-white/65 hover:border-white/25 hover:text-white"
-              }`}
+                }`}
               aria-current={isActive ? "page" : undefined}
             >
               <span className="font-mono text-[0.65rem] opacity-60">{item.code}</span>
